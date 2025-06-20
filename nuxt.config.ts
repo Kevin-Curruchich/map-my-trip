@@ -2,6 +2,14 @@
 export default defineNuxtConfig({
   compatibilityDate: "2025-05-15",
   devtools: { enabled: true },
+  nitro: {
+    firebase: {
+      gen: 2,
+      httpsOptions: {
+        maxInstances: 1,
+      },
+    },
+  },
   modules: [
     "@nuxtjs/i18n",
     "@nuxt/ui",
