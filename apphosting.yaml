@@ -8,37 +8,37 @@ runConfig:
 # Environment variables and secrets.
 env:
   - variable: NUXT_SECRET
-    secret: projects/may-my-trip-kcode/locations/us-central1/parameters/NUXT_SECRET
+    secret: projects/may-my-trip-kcode/secrets/NUXT_SECRET/versions/latest
     availability:
       - BUILD
       - RUNTIME
   - variable: AUTH_ORIGIN
-    secret: projects/may-my-trip-kcode/locations/us-central1/parameters/AUTH_ORIGIN
+    secret: projects/may-my-trip-kcode/secrets/AUTH_ORIGIN/versions/latest
     availability:
       - BUILD
       - RUNTIME
   - variable: GOOGLE_CLIENT_ID
-    secret: projects/may-my-trip-kcode/locations/us-central1/parameters/GOOGLE_CLIENT_ID
+    secret: projects/may-my-trip-kcode/secrets/GOOGLE_CLIENT_ID/versions/latest
     availability:
       - BUILD
       - RUNTIME
   - variable: GOOGLE_CLIENT_SECRET
-    secret: projects/may-my-trip-kcode/locations/us-central1/parameters/GOOGLE_CLIENT_SECRET
+    secret: projects/may-my-trip-kcode/secrets/GOOGLE_CLIENT_SECRET/versions/latest
     availability:
       - BUILD
       - RUNTIME
   - variable: GOOGLE_MAPS_API_KEY
-    secret: projects/may-my-trip-kcode/locations/us-central1/parameters/GOOGLE_MAPS_API_KEY
+    secret: projects/may-my-trip-kcode/secrets/GOOGLE_MAPS_API_KEY/versions/latest
     availability:
       - BUILD
       - RUNTIME
   - variable: SUPABASE_URL
-    secret: projects/may-my-trip-kcode/locations/us-central1/parameters/SUPABASE_URL
+    secret: projects/may-my-trip-kcode/secrets/SUPABASE_URL/versions/latest
     availability:
       - BUILD
       - RUNTIME
   - variable: SUPABASE_KEY
-    secret: projects/may-my-trip-kcode/locations/us-central1/parameters/SUPABASE_KEY
+    secret: projects/may-my-trip-kcode/secrets/SUPABASE_KEY/versions/latest
     availability:
       - BUILD
       - RUNTIME
