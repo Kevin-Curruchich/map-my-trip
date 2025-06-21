@@ -8,11 +8,11 @@ runConfig:
 # Environment variables and secrets.
 env:
   - variable: NODE_ENV
-    value: "production"
+    value: production
   - variable: PORT
-    value: "8080"
+    value: 8080
   - variable: NITRO_PRESET
-    value: "firebase"
+    value: firebase
   - variable: NUXT_SECRET
     secret: projects/may-my-trip-kcode/secrets/NUXT_SECRET/versions/latest
     availability:

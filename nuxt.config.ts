@@ -3,11 +3,6 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-05-15",
   nitro: {
     preset: "firebase-app-hosting",
-    firebase: {
-      appHosting: {
-        runCommand: "node .output/server/index.mjs",
-      },
-    },
   },
   devtools: { enabled: true },
   routeRules: {
