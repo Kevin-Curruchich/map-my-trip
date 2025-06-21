@@ -1,6 +1,12 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: "2025-05-15",
+  nitro: {
+    preset: "firebase-app-hosting",
+    firebase: {
+      gen: 2,
+    },
+  },
   devtools: { enabled: true },
   routeRules: {
     "/": { prerender: true },
