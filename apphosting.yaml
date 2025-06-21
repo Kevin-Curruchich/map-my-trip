@@ -1,0 +1,50 @@
+# Settings for Backend (on Cloud Run).
+# See https://firebase.google.com/docs/app-hosting/configure#cloud-run
+runConfig:
+  minInstances: 1 # Changed from 1 to reduce costs
+  maxInstances: 2 # Increased for better scaling
+  cpu: 1
+  memory: 256
+# Environment variables and secrets.
+env:
+  - variable: NUXT_SECRET
+    secret: projects/may-my-trip-kcode/locations/us-central1/parameters/NUXT_SECRET
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: AUTH_ORIGIN
+    secret: projects/may-my-trip-kcode/locations/us-central1/parameters/AUTH_ORIGIN
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: GOOGLE_CLIENT_ID
+    secret: projects/may-my-trip-kcode/locations/us-central1/parameters/GOOGLE_CLIENT_ID
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: GOOGLE_CLIENT_SECRET
+    secret: projects/may-my-trip-kcode/locations/us-central1/parameters/GOOGLE_CLIENT_SECRET
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: GOOGLE_MAPS_API_KEY
+    secret: projects/may-my-trip-kcode/locations/us-central1/parameters/GOOGLE_MAPS_API_KEY
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: SUPABASE_URL
+    secret: projects/may-my-trip-kcode/locations/us-central1/parameters/SUPABASE_URL
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: SUPABASE_KEY
+    secret: projects/may-my-trip-kcode/locations/us-central1/parameters/SUPABASE_KEY
+    availability:
+      - BUILD
+      - RUNTIME
+  # Add Node.js environment for production
+  - variable: NODE_ENV
+    value: "production"
+    availability:
+      - BUILD
+      - RUNTIME
