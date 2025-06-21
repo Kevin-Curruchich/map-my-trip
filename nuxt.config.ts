@@ -4,7 +4,9 @@ export default defineNuxtConfig({
   nitro: {
     preset: "firebase-app-hosting",
     firebase: {
-      gen: 2,
+      appHosting: {
+        runCommand: "node .output/server/index.mjs",
+      },
     },
   },
   devtools: { enabled: true },
