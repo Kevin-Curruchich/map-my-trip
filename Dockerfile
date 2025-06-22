@@ -17,10 +17,5 @@ RUN npm run build
 # Expose port
 EXPOSE 8080
 
-# Set environment variables
-ENV PORT=8080
-ENV HOST=0.0.0.0
-ENV NODE_ENV=production
-
 # Start the application
 CMD ["npm", "start"]
