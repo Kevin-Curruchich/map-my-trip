@@ -48,3 +48,5 @@ env:
     availability:
       - BUILD
       - RUNTIME
+buildConfig:
+  runtime: nodejs20

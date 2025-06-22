@@ -2,7 +2,7 @@
 export default defineNuxtConfig({
   compatibilityDate: "2025-05-15",
   nitro: {
-    preset: "firebase-app-hosting",
+    preset: "node-server",
   },
   devtools: { enabled: true },
   routeRules: {
