@@ -1,6 +1,6 @@
 FROM node:18-alpine
 
-WORKDIR /app
+WORKDIR /workspace
 
 # Copy package files
 COPY package*.json ./
@@ -18,4 +18,4 @@ RUN npm run build
 EXPOSE 8080
 
 # Start the application
-CMD ["node", "/app/.output/server/index.mjs"]
+CMD ["node", "/workspace/.output/server/index.mjs"]
