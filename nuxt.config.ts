@@ -2,9 +2,6 @@
 export default defineNuxtConfig({
   compatibilityDate: "2025-05-15",
   nitro: {
-    prerender: {
-      autoSubfolderIndex: false,
-    },
     esbuild: {
       options: {
         format: "esm",
@@ -12,12 +9,6 @@ export default defineNuxtConfig({
     },
   },
   devtools: { enabled: true },
-  // routeRules: {
-  //   "/": { prerender: true },
-  //   "/dashboard/**": { ssr: true },
-  //   "/auth/**": { ssr: true },
-  //   "/server/api/**": { cors: true },
-  // },
   modules: [
     "@nuxtjs/i18n",
     "@nuxt/ui",

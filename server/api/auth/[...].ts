@@ -1,6 +1,5 @@
 import { NuxtAuthHandler } from "#auth";
 import Google from "next-auth/providers/google";
-import { Database } from "~/database.types";
 import { createServerUserService } from "~/server/utils/userService";
 
 export default NuxtAuthHandler({
