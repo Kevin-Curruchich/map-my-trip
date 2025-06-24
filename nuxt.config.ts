@@ -7,6 +7,7 @@ export default defineNuxtConfig({
         format: "esm",
       },
     },
+    minify: false,
   },
   devtools: { enabled: true },
   modules: [
@@ -34,7 +35,6 @@ export default defineNuxtConfig({
     baseURL: process.env.AUTH_ORIGIN,
     provider: {
       type: "authjs",
-      defaultProvider: "google",
     },
     globalAppMiddleware: {
       isEnabled: true,

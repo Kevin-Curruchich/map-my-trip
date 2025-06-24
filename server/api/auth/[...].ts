@@ -28,7 +28,7 @@ export default NuxtAuthHandler({
     },
     async session({ session, token }) {
       try {
-        if (token.sub) {
+        if (token?.sub) {
           const userService = createServerUserService();
           const user = await userService.findByExternalId(token.sub);
           if (user) {
