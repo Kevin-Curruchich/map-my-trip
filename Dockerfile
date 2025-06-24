@@ -6,7 +6,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+RUN npm i --only=production && npm cache clean --force
 
 # Copy source code
 COPY . .
@@ -18,4 +18,4 @@ RUN npm run build
 EXPOSE 8080
 
 # Start the application
-CMD ["node", "./output/server/index.mjs"]
+CMD ["node", ".output/server/index.mjs"]
