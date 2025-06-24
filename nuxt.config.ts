@@ -5,6 +5,11 @@ export default defineNuxtConfig({
     prerender: {
       autoSubfolderIndex: false,
     },
+    esbuild: {
+      options: {
+        format: "esm",
+      },
+    },
   },
   devtools: { enabled: true },
   routeRules: {
