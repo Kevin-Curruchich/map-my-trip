@@ -2,9 +2,8 @@
 export default defineNuxtConfig({
   compatibilityDate: "2025-05-15",
   nitro: {
-    preset: "node-server",
-    output: {
-      dir: ".output",
+    prerender: {
+      autoSubfolderIndex: false,
     },
   },
   devtools: { enabled: true },
