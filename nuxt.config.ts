@@ -3,6 +3,9 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-05-15",
   nitro: {
     preset: "node-server",
+    output: {
+      dir: ".output",
+    },
   },
   devtools: { enabled: true },
   routeRules: {

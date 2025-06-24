@@ -1,1 +1,16 @@
-{}
+{
+  "hosting": {
+    "public": ".output/public",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [
+      {
+        "source": "**",
+        "function": "nuxtApp"
+      }
+    ]
+  },
+  "functions": {
+    "source": ".output/server",
+    "runtime": "nodejs18"
+  }
+}
