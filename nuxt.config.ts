@@ -12,12 +12,12 @@ export default defineNuxtConfig({
     },
   },
   devtools: { enabled: true },
-  routeRules: {
-    "/": { prerender: true },
-    "/dashboard/**": { ssr: true },
-    "/auth/**": { ssr: true },
-    "/server/api/**": { cors: true },
-  },
+  // routeRules: {
+  //   "/": { prerender: true },
+  //   "/dashboard/**": { ssr: true },
+  //   "/auth/**": { ssr: true },
+  //   "/server/api/**": { cors: true },
+  // },
   modules: [
     "@nuxtjs/i18n",
     "@nuxt/ui",
