@@ -74,10 +74,14 @@ export default NuxtAuthHandler({
 
           return true;
         } catch (error) {
-          throw new Error("Sign-in failed");
+          console.error("signIn callback error", error);
+          throw error;
         }
       } else {
-        throw new Error("Unsupported provider");
+        console.warn(
+          "Unsupported provider or missing profile in signIn callback"
+        );
+        return false; // Reject sign-in for unsupported providers
       }
     },
   },
