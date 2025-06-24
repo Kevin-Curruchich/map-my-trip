@@ -18,4 +18,4 @@ RUN npm run build
 EXPOSE 8080
 
 # Start the application
-CMD ["node", ".output/server/index.mjs"]
+CMD ["node", "/app/.output/server/index.mjs"]
