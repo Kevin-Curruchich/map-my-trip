@@ -35,6 +35,7 @@ export default defineNuxtConfig({
     baseURL: process.env.AUTH_ORIGIN,
     provider: {
       type: "authjs",
+      defaultProvider: "google",
     },
     globalAppMiddleware: {
       isEnabled: true,
