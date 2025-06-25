@@ -7,8 +7,7 @@ export default NuxtAuthHandler({
   secret: process.env.NUXT_SECRET,
   useSecureCookies: process.env.NODE_ENV === "production" || false,
   providers: [
-    // @ts-expect-error You need to use .default here for it to work during build
-    Google.default({
+    Google({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
     }),
