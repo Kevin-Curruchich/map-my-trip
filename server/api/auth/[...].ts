@@ -5,6 +5,7 @@ import { createServerUserService } from "~/server/utils/userService";
 export default NuxtAuthHandler({
   debug: true,
   secret: process.env.NUXT_SECRET,
+  useSecureCookies: process.env.NODE_ENV === "production" || false,
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
