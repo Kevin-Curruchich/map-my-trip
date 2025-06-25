@@ -33,23 +33,10 @@ export default defineNuxtConfig({
   auth: {
     isEnabled: true,
     originEnvKey: "AUTH_ORIGIN",
+    baseURL: process.env.AUTH_BASE_URL,
     provider: {
       type: "authjs",
       defaultProvider: "google",
-      endpoints: {
-        signIn: {
-          path: "/api/auth/signin",
-        },
-        signOut: {
-          path: "/api/auth/signout",
-        },
-        session: {
-          path: "/api/auth/session",
-        },
-        callback: {
-          path: "/api/auth/callback",
-        },
-      },
     },
     globalAppMiddleware: {
       isEnabled: true,
