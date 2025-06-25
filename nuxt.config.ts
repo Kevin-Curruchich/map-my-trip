@@ -18,7 +18,11 @@ export default defineNuxtConfig({
     "@pinia/nuxt",
     "@pinia/colada-nuxt",
     "@nuxtjs/supabase",
+    "@maas/vue-equipment/nuxt",
   ],
+  vueEquipment: {
+    plugins: ["MagicMarquee"],
+  },
   css: ["~/assets/css/main.css"],
   i18n: {
     locales: [
@@ -53,9 +57,11 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
+      authBaseUrl: process.env.AUTH_BASE_URL || "",
+      authOrigin: process.env.AUTH_ORIGIN || "",
       googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || "",
       supabaseUrl: process.env.SUPABASE_URL || "",
-      supabaseKey: process.env.SUPABASE_KEY || "",
     },
+    supabaseKey: process.env.SUPABASE_KEY || "",
   },
 });

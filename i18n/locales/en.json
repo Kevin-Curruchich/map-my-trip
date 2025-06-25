@@ -3,5 +3,19 @@
   "signInWith": "Sign in with:",
   "signIn": "Sign in",
   "greetings": "Hello,",
-  "signOut": "Sign out"
+  "signOut": "Sign out",
+  "planPerfectTrip": "Plan Your Perfect Trip",
+  "describeDreamTrip": "Describe your dream trip and let AI create the perfect itinerary for you",
+  "describeTripPlaceholder": "Describe your trip...",
+  "creating": "Creating...",
+  "createPlan": "Create Plan",
+  "needInspiration": "Need inspiration? Try these examples:",
+  "beachVacation": "Beach Vacation",
+  "beachVacationText": "Plan a 7-day beach vacation in Thailand with water activities and local cuisine",
+  "mountainAdventure": "Mountain Adventure",
+  "mountainAdventureText": "Create a 5-day hiking trip in the Swiss Alps with scenic routes and cozy lodges",
+  "culturalTour": "Cultural Tour",
+  "culturalTourText": "Design a 10-day cultural tour through Italy visiting museums, historic sites, and local markets",
+  "foodWine": "Food & Wine",
+  "foodWineText": "Plan a 4-day food and wine experience in Napa Valley with tastings and cooking classes"
 }
