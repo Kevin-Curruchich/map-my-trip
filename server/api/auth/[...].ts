@@ -6,10 +6,17 @@ export default NuxtAuthHandler({
   debug: true,
   secret: process.env.NUXT_SECRET,
   useSecureCookies: process.env.NODE_ENV === "production" || false,
+
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      wellKnown: "https://accounts.google.com/.well-known/openid-configuration",
+      authorization: {
+        params: {
+          scope: "openid email profile",
+        },
+      },
     }),
   ],
   callbacks: {
