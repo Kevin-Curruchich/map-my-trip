@@ -36,6 +36,20 @@ export default defineNuxtConfig({
     provider: {
       type: "authjs",
       defaultProvider: "google",
+      endpoints: {
+        signIn: {
+          path: "/api/auth/signin",
+        },
+        signOut: {
+          path: "/api/auth/signout",
+        },
+        session: {
+          path: "/api/auth/session",
+        },
+        callback: {
+          path: "/api/auth/callback",
+        },
+      },
     },
     globalAppMiddleware: {
       isEnabled: true,
