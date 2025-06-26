@@ -36,7 +36,7 @@ export default defineNuxtConfig({
   },
   auth: {
     isEnabled: true,
-    baseURL: process.env.NUXT_AUTH_BASE_URL,
+    baseURL: process.env.AUTH_BASE_URL,
     provider: {
       type: "authjs",
       defaultProvider: "google",
