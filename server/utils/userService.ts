@@ -3,8 +3,9 @@ import type { Database } from "~/database.types";
 
 export const createServerUserService = () => {
   const supabase = createClient<Database>(
-    useRuntimeConfig().public.supabaseUrl || "",
-    useRuntimeConfig().supabaseKey || "",
+    process.env.NUXT_SUPABASE_URL || "",
+    process.env.NUXT_SUPABASE_KEY || "",
+
     {
       db: {
         schema: "map_my_trip_db",
