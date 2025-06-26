@@ -4,13 +4,13 @@ import { createServerUserService } from "~/server/utils/userService";
 
 export default NuxtAuthHandler({
   debug: true,
-  secret: process.env.NUXT_SECRET,
-  useSecureCookies: process.env.NODE_ENV === "production" || false,
-
+  secret: useRuntimeConfig().authSecret,
   providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    // disable the Google.default error
+    // @ts-ignore
+    Google.default({
+      clientId: useRuntimeConfig().public.googleClientId,
+      clientSecret: useRuntimeConfig().googleClientSecret || "",
       wellKnown: "https://accounts.google.com/.well-known/openid-configuration",
       authorization: {
         params: {
@@ -92,6 +92,21 @@ export default NuxtAuthHandler({
         );
         return false; // Reject sign-in for unsupported providers
       }
+    },
+  },
+  useSecureCookies: process.env.NODE_ENV === "production" || false,
+  cookies: {
+    sessionToken: {
+      name:
+        process.env.NODE_ENV === "production"
+          ? "__Secure-next-auth.session-token"
+          : "next-auth.session-token",
+      options: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+      },
     },
   },
 });

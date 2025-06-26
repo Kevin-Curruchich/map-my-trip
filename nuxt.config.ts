@@ -36,8 +36,7 @@ export default defineNuxtConfig({
   },
   auth: {
     isEnabled: true,
-    originEnvKey: "AUTH_ORIGIN",
-    baseURL: process.env.AUTH_BASE_URL,
+    baseURL: process.env.NUXT_AUTH_BASE_URL,
     provider: {
       type: "authjs",
       defaultProvider: "google",
@@ -57,11 +56,14 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || "",
-      supabaseUrl: process.env.SUPABASE_URL || "",
+      supabaseUrl: process.env.NUXT_SUPABASE_URL || "",
+      authBaseUrl: process.env.NUXT_AUTH_BASE_URL || "",
+      googleMapsApiKey: process.env.NUXT_GOOGLE_MAPS_API_KEY || "",
     },
-    authBaseUrl: process.env.AUTH_BASE_URL || "",
-    authOrigin: process.env.AUTH_ORIGIN || "",
-    supabaseKey: process.env.SUPABASE_KEY || "",
+    supabaseKey: process.env.NUXT_SUPABASE_KEY || "",
+    openaiApiKey: process.env.NUXT_OPENAI_API_KEY || "",
+    googleClientSecret: process.env.NUXT_GOOGLE_CLIENT_SECRET || "",
+    googleClientId: process.env.NUXT_GOOGLE_CLIENT_ID || "",
+    authSecret: process.env.NUXT_AUTH_SECRET || "",
   },
 });
