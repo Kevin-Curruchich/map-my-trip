@@ -94,16 +94,16 @@ export default NuxtAuthHandler({
       }
     },
   },
-  useSecureCookies: process.env.NODE_ENV === "production" || false,
+  useSecureCookies: useRuntimeConfig().public.nodeEnv === "production" || false,
   cookies: {
     sessionToken: {
       name:
-        process.env.NODE_ENV === "production"
+        useRuntimeConfig().public.nodeEnv === "production"
           ? "__Secure-next-auth.session-token"
           : "next-auth.session-token",
       options: {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: useRuntimeConfig().public.nodeEnv === "production",
         sameSite: "lax",
         path: "/",
       },

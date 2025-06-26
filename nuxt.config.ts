@@ -56,6 +56,7 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
+      nodeEnv: process.env.NODE_ENV,
       supabaseUrl: process.env.NUXT_SUPABASE_URL || "",
       authBaseUrl: process.env.NUXT_AUTH_BASE_URL || "",
       googleMapsApiKey: process.env.NUXT_GOOGLE_MAPS_API_KEY || "",

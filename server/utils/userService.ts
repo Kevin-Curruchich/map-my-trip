@@ -3,8 +3,8 @@ import type { Database } from "~/database.types";
 
 export const createServerUserService = () => {
   const supabase = createClient<Database>(
-    process.env.SUPABASE_URL || "",
-    process.env.SUPABASE_KEY || "",
+    useRuntimeConfig().public.supabaseUrl || "",
+    useRuntimeConfig().supabaseKey || "",
     {
       db: {
         schema: "map_my_trip_db",
