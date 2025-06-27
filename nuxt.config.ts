@@ -1,14 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: "2025-05-15",
-  nitro: {
-    esbuild: {
-      options: {
-        format: "esm",
-      },
-    },
-    minify: false,
-  },
   devtools: { enabled: true },
   modules: [
     "@nuxtjs/i18n",
@@ -40,10 +32,10 @@ export default defineNuxtConfig({
     provider: {
       type: "authjs",
       defaultProvider: "google",
+      addDefaultCallbackUrl: true,
     },
     globalAppMiddleware: {
       isEnabled: true,
-      addDefaultCallbackUrl: true,
     },
   },
   supabase: {

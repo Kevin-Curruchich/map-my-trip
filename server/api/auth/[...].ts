@@ -8,15 +8,9 @@ export default NuxtAuthHandler({
   providers: [
     // disable the Google.default error
     // @ts-ignore
-    Google({
+    Google.default({
       clientId: useRuntimeConfig().public.googleClientId,
       clientSecret: useRuntimeConfig().googleClientSecret || "",
-      wellKnown: "https://accounts.google.com/.well-known/openid-configuration",
-      authorization: {
-        params: {
-          scope: "openid email profile",
-        },
-      },
     }),
   ],
   callbacks: {
