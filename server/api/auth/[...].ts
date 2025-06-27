@@ -11,6 +11,7 @@ export default NuxtAuthHandler({
     Google({
       clientId: useRuntimeConfig().public.googleClientId,
       clientSecret: useRuntimeConfig().googleClientSecret || "",
+      issuer: "https://accounts.google.com",
     }),
   ],
   callbacks: {
