@@ -32,7 +32,7 @@ export default defineNuxtConfig({
     provider: {
       type: "authjs",
       defaultProvider: "google",
-      addDefaultCallbackUrl: true,
+      addDefaultCallbackUrl: process.env.AUTH_BASE_URL || "",
     },
     globalAppMiddleware: {
       isEnabled: true,
