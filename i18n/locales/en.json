@@ -9,7 +9,7 @@
   "describeTripPlaceholder": "Describe your trip...",
   "creating": "Creating...",
   "createPlan": "Create Plan",
-  "needInspiration": "Need inspiration? Try these examples:",
+  "needInspiration": "Need inspiration?",
   "beachVacation": "Beach Vacation",
   "beachVacationText": "Plan a 7-day beach vacation in Thailand with water activities and local cuisine",
   "mountainAdventure": "Mountain Adventure",
@@ -17,5 +17,7 @@
   "culturalTour": "Cultural Tour",
   "culturalTourText": "Design a 10-day cultural tour through Italy visiting museums, historic sites, and local markets",
   "foodWine": "Food & Wine",
-  "foodWineText": "Plan a 4-day food and wine experience in Napa Valley with tastings and cooking classes"
+  "foodWineText": "Plan a 4-day food and wine experience in Napa Valley with tastings and cooking classes",
+  "generatingTripPlan": "Generating your trip plan...",
+  "thisMayTakeAWhile": "This may take a while, please be patient."
 }

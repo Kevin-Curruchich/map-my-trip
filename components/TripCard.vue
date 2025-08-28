@@ -24,39 +24,6 @@ const getDurationText = (days: number | null) => {
   if (!days) return "Duration not set";
   return days === 1 ? "1 day" : `${days} days`;
 };
-
-const menuItems = [
-  [
-    {
-      label: "Edit Trip",
-      icon: "i-heroicons-pencil-square",
-      click: () => {
-        // Handle edit action
-        console.log("Edit trip:", props.trip.id);
-      },
-    },
-  ],
-  [
-    {
-      label: "Duplicate",
-      icon: "i-heroicons-document-duplicate",
-      click: () => {
-        // Handle duplicate action
-        console.log("Duplicate trip:", props.trip.id);
-      },
-    },
-  ],
-  [
-    {
-      label: "Delete",
-      icon: "i-heroicons-trash",
-      click: () => {
-        // Handle delete action
-        console.log("Delete trip:", props.trip.id);
-      },
-    },
-  ],
-];
 </script>
 
 <template>
@@ -79,17 +46,12 @@ const menuItems = [
 
         <!-- Badges overlay -->
         <div class="absolute top-3 right-3 flex gap-2">
-          <UBadge
-            v-if="trip.is_public"
-            color="emerald"
-            variant="solid"
-            size="xs"
-          >
+          <UBadge v-if="trip.is_public" color="info" variant="solid" size="xs">
             Public
           </UBadge>
           <UBadge
             v-if="trip.is_template"
-            color="blue"
+            color="neutral"
             variant="solid"
             size="xs"
           >
@@ -139,7 +101,7 @@ const menuItems = [
         <UBadge
           v-for="tag in trip.tags"
           :key="tag"
-          color="gray"
+          color="info"
           variant="soft"
           size="xs"
         >
@@ -160,16 +122,6 @@ const menuItems = [
         >
           View Trip
         </UButton>
-
-        <UDropdown :items="menuItems" :popper="{ placement: 'bottom-end' }">
-          <UButton
-            color="gray"
-            variant="ghost"
-            size="sm"
-            square
-            icon="i-heroicons-ellipsis-horizontal"
-          />
-        </UDropdown>
       </div>
     </template>
   </UCard>

@@ -9,12 +9,12 @@ const { data: trips, isLoading } = getUserTrips();
 </script>
 
 <template>
-  <div class="trips-page">
+  <div class="main-h-screen bg-gray-50 p-6">
     <div
       class="border border-gray-200 bg-white p-4 rounded-lg mb-6 flex items-center justify-between"
     >
       <h1 class="text-xl font-semibold text-gray-900">Your Trips</h1>
-      <UButton to="/dashboard/trips/new" color="primary">
+      <UButton to="/dashboard" color="primary" icon="i-heroicons-plus">
         Create New Trip
       </UButton>
     </div>
@@ -31,19 +31,23 @@ const { data: trips, isLoading } = getUserTrips();
     </template>
 
     <template v-else-if="trips && trips.length > 0">
-      <div class="trips-page__grid">
+      <div
+        class="flex-col gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+      >
         <TripCard v-for="trip in trips" :key="trip.id" :trip="trip" />
       </div>
     </template>
 
     <template v-else>
-      <div class="trips-page__empty">
-        <Icon name="heroicons:map" class="trips-page__empty-icon" />
-        <h3 class="trips-page__empty-title">No trips yet</h3>
-        <p class="trips-page__empty-description">
+      <div
+        class="flex flex-col items-center justify-center h-full text-center p-6 bg-white rounded-lg shadow-md"
+      >
+        <Icon name="heroicons:map" class="mb-4 text-gray-400 w-16 h-16" />
+        <h3 class="text-xl font-semibold">No trips yet</h3>
+        <p class="text-gray-600 mb-4">
           Start planning your first adventure by creating a new trip.
         </p>
-        <NuxtLink to="/dashboard/trips/create" class="trips-page__empty-cta">
+        <NuxtLink to="/dashboard" class="text-blue-500 hover:underline">
           Create Your First Trip
         </NuxtLink>
       </div>

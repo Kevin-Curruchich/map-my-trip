@@ -8,7 +8,7 @@ export default NuxtAuthHandler({
   providers: [
     // disable the Google.default error
     // @ts-ignore
-    Google({
+    Google.default({
       clientId: useRuntimeConfig().public.googleClientId,
       clientSecret: useRuntimeConfig().googleClientSecret || "",
       issuer: "https://accounts.google.com",

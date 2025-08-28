@@ -24,6 +24,22 @@ export const useTrips = () => {
     });
   };
 
+  //Get Trip by ID with automatic caching
+  const getTripById = (tripId: string) => {
+    return useQuery({
+      key: ["trips", "id", tripId],
+      query: async () => {
+        const { data, error } = await client
+          .from("trips")
+          .select("*")
+          .eq("id", tripId)
+          .single();
+        if (error) throw error;
+        return data;
+      },
+    });
+  };
+
   // Create trip with optimistic updates
   const createTrip = () => {
     return useMutation({
@@ -45,6 +61,7 @@ export const useTrips = () => {
 
   return {
     getUserTrips,
+    getTripById,
     createTrip,
   };
 };
