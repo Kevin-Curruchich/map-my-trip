@@ -1,5 +1,5 @@
 import { CreateTripExampleSchema } from "../../schemas";
-import { getTripExamples } from "../../services/langchain.service";
+import { getTripExamples } from "../../services/trip-generator.service";
 
 export default defineCachedEventHandler(
   async (event) => {

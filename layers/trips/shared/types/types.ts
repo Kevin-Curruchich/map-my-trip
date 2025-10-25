@@ -18,6 +18,7 @@ export interface ItineraryDay {
 export interface Activity {
   name: string;
   activityType: ActivityType;
+  placeId?: string; // Add placeId for frontend integration
 }
 
 export enum ActivityType {

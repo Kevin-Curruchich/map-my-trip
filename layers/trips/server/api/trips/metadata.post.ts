@@ -18,8 +18,10 @@ export default defineEventHandler(async (event) => {
     prompt: data.prompt,
   });
 
+  console.log("response", response);
+
   const store = useStorage("local");
   await store.setItem("newTripCreated", true);
 
-  return { response: response };
+  return { response };
 });

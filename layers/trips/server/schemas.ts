@@ -13,8 +13,12 @@ export const TripExampleSchemaResponse = z.object({
   ),
 });
 
-export const CreateTripSchema = z.object({
-  prompt: z.string().min(10).max(500),
+export const CreateTripInputState = z.object({
+  prompt: z
+    .string()
+    .min(10)
+    .max(500)
+    .describe("The user's prompt for the trip itinerary"),
 });
 
 export const TripPlannerResponse = z.object({
@@ -25,6 +29,7 @@ export const TripPlannerResponse = z.object({
       day: z.number(),
       activities: z.array(
         z.object({
+          id: z.string(),
           name: z.string(),
           activityType: z.enum([
             "eat",
