@@ -1,5 +1,5 @@
 import { CreateTripInputState } from "../../schemas";
-import { workflow } from "../../services/langgraph.service";
+import { tripGenerator } from "../../services/trip-generator.service";
 
 export default defineEventHandler(async (event) => {
   const { success, data } = await readValidatedBody(
@@ -14,9 +14,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const response = await workflow.invoke({
-    prompt: data.prompt,
-  });
+  const response = await tripGenerator(data.prompt);
 
   const store = useStorage("local");
   await store.setItem("newTripCreated", true);

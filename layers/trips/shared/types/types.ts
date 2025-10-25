@@ -8,6 +8,13 @@ export interface Trip {
   title: string;
   description: string;
   itinerary: ItineraryDay[];
+  activitiesWithPlaces?: ActivityWithPlace[];
+}
+
+export interface ActivityWithPlace {
+  name: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface ItineraryDay {
@@ -16,8 +23,10 @@ export interface ItineraryDay {
 }
 
 export interface Activity {
+  id: number;
   name: string;
   activityType: ActivityType;
+  location: string;
   placeId?: string; // Add placeId for frontend integration
 }
 

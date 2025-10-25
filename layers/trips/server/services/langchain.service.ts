@@ -28,9 +28,9 @@ export const googlePlacesTool = () => {
   );
 };
 
-export const createOpenAIModel = () => {
+export const createOpenAIModel = (model: string = "gpt-4o-mini") => {
   const llm = new ChatOpenAI({
-    model: "gpt-4o-mini",
+    model,
     apiKey: useRuntimeConfig().openaiApiKey,
   });
 

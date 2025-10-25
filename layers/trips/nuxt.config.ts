@@ -6,5 +6,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     openaiApiKey: "",
     googlePlacesApiKey: "",
+    public: {
+      googleMapsApiKey: "",
+    },
   },
 });

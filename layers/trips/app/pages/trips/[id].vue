@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { getActivityIcon } from "~~/layers/trips/server/utils/getActivitIcon";
-
 const route = useRoute();
 const tripId = route.params.id as string;
 
@@ -48,7 +46,6 @@ const shareTrip = () => {
 const copyToClipboard = () => {
   navigator.clipboard.writeText(window.location.href).then(() => {
     // You could add a toast notification here
-    console.log("Trip link copied to clipboard!");
   });
 };
 
@@ -111,6 +108,16 @@ const duplicateTrip = () => {
             </div>
           </template>
         </UCard>
+      </div>
+
+      <div class="mb-8">
+        <ItineraryPlaces
+          :activities="trip.activitiesWithPlaces"
+          :map-location="{
+            lat: 14.550030465754588,
+            lng: -90.74367141740619,
+          }"
+        />
       </div>
 
       <!-- Itinerary Timeline -->

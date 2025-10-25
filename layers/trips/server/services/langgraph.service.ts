@@ -97,21 +97,32 @@ async function generateTripMetadata(state: z.infer<typeof OverallState>) {
           .string()
           .describe("A catchy and concise title for the trip"),
         tripDescription: z.string().describe("A brief description of the trip"),
-        tripTags: z.array(z.string()).describe("Tags related to the trip"),
-        numberOfDays: z
-          .number()
-          .min(1)
-          .max(14)
-          .describe("Number of days for the trip"),
       })
     )
     .invoke(
-      `Based on the following trip idea: "${state.prompt}", generate a catchy and concise title, description, number of days, and tags for the trip.`
+      `Based on the following trip idea: "${state.prompt}", generate a catchy and concise title and description for the trip.`
     );
 
   return {
     title: msg.tripTitle,
     description: msg.tripDescription,
+  };
+}
+
+async function generateTripTags(state: z.infer<typeof OverallState>) {
+  const msg = await llm
+    .withStructuredOutput(
+      z.object({
+        tripTags: z.array(z.string()).describe("Tags related to the trip"),
+      })
+    )
+    .invoke(
+      `Based on the following trip idea: "${state.prompt}", generate a list of tags related to the trip.
+      The tags will be used to search for relevant places using Google Places API, so focus on locations, activities, and themes that would help find interesting places.
+      `
+    );
+
+  return {
     tripTags: msg.tripTags,
   };
 }
@@ -125,6 +136,7 @@ async function searchGooglePlaces(state: z.infer<typeof OverallState>) {
 
   for (const query of searchQueries) {
     const result = await placesTool.invoke({ input: query });
+
     placesResults.push(result);
   }
 
@@ -174,7 +186,7 @@ async function generateTripItinerary(state: z.infer<typeof OverallState>) {
         state.prompt
       }" and the following places: ${JSON.stringify(
         state.tripPlaces
-      )}, generate a detailed itinerary for ${5} days.`
+      )}, generate a detailed itinerary for ${1} days.`
     );
 
   const itinerary = msg.itinerary.map((day) => ({
@@ -202,10 +214,12 @@ export const workflow = new StateGraph({
   output: OutputState,
 })
   .addNode("generateTripMetadata", generateTripMetadata)
+  .addNode("generateTripTags", generateTripTags)
   .addNode("searchGooglePlaces", searchGooglePlaces)
   .addNode("generateTripItinerary", generateTripItinerary)
   .addEdge(START, "generateTripMetadata")
-  .addEdge("generateTripMetadata", "searchGooglePlaces")
+  .addEdge(START, "generateTripTags")
+  .addEdge("generateTripTags", "searchGooglePlaces")
   .addEdge("searchGooglePlaces", "generateTripItinerary")
   .addEdge("generateTripItinerary", END)
   .compile();

@@ -12,6 +12,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@googlemaps/js-api-loader": "^2.0.1",
     "@langchain/community": "0.3.7-rc.0",
     "@langchain/core": "1.0.0-alpha.6",
     "@langchain/langgraph": "1.0.0-alpha.5",
@@ -31,6 +32,7 @@
   },
   "packageManager": "pnpm@10.18.0+sha512.e804f889f1cecc40d572db084eec3e4881739f8dec69c0ff10d2d1beff9a4e309383ba27b5b750059d7f4c149535b6cd0d2cb1ed3aeb739239a4284a68f40cfa",
   "devDependencies": {
+    "@types/google.maps": "^3.58.1",
     "husky": "^9.1.7"
   }
 }

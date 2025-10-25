@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@googlemaps/js-api-loader':
+        specifier: ^2.0.1
+        version: 2.0.1
       '@langchain/community':
         specifier: 0.3.7-rc.0
         version: 0.3.7-rc.0(@browserbasehq/sdk@2.6.0)(@langchain/core@1.0.0-alpha.6(@opentelemetry/api@1.9.0)(openai@5.12.2(ws@8.18.3)(zod@4.1.11)))(@opentelemetry/api@1.9.0)(axios@1.12.2)(ignore@5.3.2)(ioredis@5.8.0)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@5.12.2(ws@8.18.3)(zod@4.1.11))(playwright@1.56.0)(ws@8.18.3)
@@ -57,6 +60,9 @@ importers:
         specifier: ^4.1.11
         version: 4.1.11
     devDependencies:
+      '@types/google.maps':
+        specifier: ^3.58.1
+        version: 3.58.1
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -499,6 +505,9 @@ packages:
 
   '@floating-ui/vue@1.1.9':
     resolution: {integrity: sha512-BfNqNW6KA83Nexspgb9DZuz578R7HT8MZw1CfK9I6Ah4QReNWEJsXWHN+SdmOVLNGmTPDi+fDT535Df5PzMLbQ==}
+
+  '@googlemaps/js-api-loader@2.0.1':
+    resolution: {integrity: sha512-YUtKJSWH6FiE/6Ii+NP+WfkvoZ55DLwyqthKmVYxZZwn/ny310dvz9Zw3cO1besEhGxA9lW7Ctjmzae1putjXQ==}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -1955,6 +1964,9 @@ packages:
 
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
+
+  '@types/google.maps@3.58.1':
+    resolution: {integrity: sha512-X9QTSvGJ0nCfMzYOnaVs/k6/4L+7F5uCS+4iUmkLEls6J9S/Phv+m/i3mDeyc49ZBgwab3EFO1HEoBY7k98EGQ==}
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
@@ -6116,6 +6128,10 @@ snapshots:
       - '@vue/composition-api'
       - vue
 
+  '@googlemaps/js-api-loader@2.0.1':
+    dependencies:
+      '@types/google.maps': 3.58.1
+
   '@humanfs/core@0.19.1': {}
 
   '@humanfs/node@0.16.7':
@@ -7469,6 +7485,8 @@ snapshots:
   '@types/bytes@3.1.5': {}
 
   '@types/estree@1.0.8': {}
+
+  '@types/google.maps@3.58.1': {}
 
   '@types/json-schema@7.0.15': {}
 
