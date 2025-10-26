@@ -13,4 +13,10 @@ export default defineNuxtConfig({
       },
     },
   },
+
+  nitro: {
+    routeRules: {
+      "/auth/google": { ssr: false },
+    },
+  },
 });
