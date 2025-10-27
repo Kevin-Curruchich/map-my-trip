@@ -6,4 +6,9 @@ export default defineNuxtConfig({
   nitro: {
     preset: "aws-amplify",
   },
+  vite: {
+    optimizeDeps: {
+      include: ["debug"],
+    },
+  },
 });

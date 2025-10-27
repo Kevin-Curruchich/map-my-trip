@@ -1,5 +1,4 @@
 export default defineOAuthGoogleEventHandler({
-  config: {},
   async onSuccess(event, { user }) {
     if (!user.email) {
       throw createError({
