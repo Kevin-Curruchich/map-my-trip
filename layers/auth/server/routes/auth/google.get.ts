@@ -1,8 +1,6 @@
 export default defineOAuthGoogleEventHandler({
   config: {},
   async onSuccess(event, { user }) {
-    console.log("Google OAuth user info:", user);
-
     if (!user.email) {
       throw createError({
         statusCode: 400,

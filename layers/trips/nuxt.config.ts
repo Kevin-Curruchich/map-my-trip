@@ -10,4 +10,8 @@ export default defineNuxtConfig({
       googleMapsApiKey: "",
     },
   },
+
+  nitro: {
+    preset: "aws-amplify",
+  },
 });
