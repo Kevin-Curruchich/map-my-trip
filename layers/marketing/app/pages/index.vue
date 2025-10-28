@@ -3,17 +3,18 @@
   <div>
     <!-- Hero Section -->
     <UPageHero
+      headline="AI Powered Travel Planner"
       title="Plan Your Dream Trip"
       description="Discover, organize, and enjoy your travels with ease."
       orientation="horizontal"
       :links="[
         { label: 'Sign Up', to: '/login', color: 'primary', size: 'lg' },
-        // { label: 'Learn More', to: '/about', variant: 'subtle' },
+        { label: 'Why MapMyTrip?', to: '#why-choose-us', variant: 'subtle' },
       ]"
     />
-
     <!-- Features Section -->
     <UPageSection
+      id="why-choose-us"
       title="Why Choose MapMyTrip?"
       description="Explore the unique features that make travel planning a breeze."
       :features="[
@@ -56,7 +57,7 @@
           icon="i-simple-icons-github"
           color="neutral"
           variant="ghost"
-          to="https://github.com/nuxt/nuxt"
+          to="https://github.com/Kevin-Curruchich/map-my-trip"
           target="_blank"
           aria-label="GitHub"
         />

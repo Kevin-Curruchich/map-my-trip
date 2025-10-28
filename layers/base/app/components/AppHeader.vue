@@ -1,8 +1,16 @@
 <script lang="ts" setup>
-const { isAuthenticated, userName, userPicture, logout } = useAuth();
 const appCong = useAppConfig();
+const router = useRouter();
+const { isAuthenticated, userName, userPicture, logout } = useAuth();
 
-async function handleCreateTrip() {}
+async function handleCreateTrip() {
+  if (!isAuthenticated.value) {
+    await router.push("/login");
+    return;
+  }
+
+  await router.push("/trips");
+}
 
 async function handleLogout() {
   await logout();
