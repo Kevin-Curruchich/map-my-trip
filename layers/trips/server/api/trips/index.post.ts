@@ -14,10 +14,19 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const response = await tripGenerator(data.prompt);
+  try {
+    const response = await tripGenerator(data.prompt);
 
-  const store = useStorage("local");
-  await store.setItem("newTripCreated", true);
+    const store = useStorage("local");
+    await store.setItem("newTripCreated", true);
 
-  return { response: response };
+    return { response: response };
+  } catch (error) {
+    throw createError({
+      statusCode: 500,
+      statusMessage:
+        "Failed to generate trip" +
+        (error instanceof Error ? `: ${error.message}` : ""),
+    });
+  }
 });

@@ -15,8 +15,9 @@ export const googlePlacesTool = () => {
     },
     {
       name: "google_places",
-      description:
-        "Search for places, attractions, restaurants, and points of interest using Google Places API. Useful for finding specific locations, popular attractions, restaurants, hotels, and other places of interest.",
+      description: `
+        Search for places, attractions, restaurants, and points of interest using Google Places API. 
+        Useful for finding specific locations, popular attractions, restaurants, hotels, and other places of interest.`,
       schema: z.object({
         input: z
           .string()

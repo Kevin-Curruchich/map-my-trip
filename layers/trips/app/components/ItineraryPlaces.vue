@@ -18,18 +18,30 @@ const props = defineProps<{
 }>();
 
 onMounted(async () => {
+  const { LatLngBounds } = await importLibrary("core");
   const { Map } = await importLibrary("maps");
   const { AdvancedMarkerElement, PinElement } = await importLibrary("marker");
 
   if (mapContainer.value) {
+    // Create map without initial center - we'll set it based on markers
     const map = new Map(mapContainer.value, {
-      center: { lat: props.mapLocation.lat, lng: props.mapLocation.lng },
       zoom: 15,
       mapId: "d5e33afae207e196df9e7830",
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: false,
     });
+
+    // Calculate bounds based on activities
+    if (props?.activities && props.activities.length > 0) {
+      const bounds = new LatLngBounds();
+
+      props.activities.forEach((activity) => {
+        bounds.extend({ lat: activity.latitude, lng: activity.longitude });
+      });
+
+      map.fitBounds(bounds);
+    }
 
     props?.activities?.forEach((activity, index) => {
       const pin = new PinElement({

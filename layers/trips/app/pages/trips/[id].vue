@@ -20,6 +20,7 @@ useSeoMeta({
 // Transform activities into timeline format
 const timelineItems = (activities: Activity[]) => {
   return activities.map((activity) => ({
+    date: activity.id,
     title: activity.name,
     icon: getActivityIcon(activity.activityType),
   }));
@@ -94,10 +95,10 @@ const duplicateTrip = () => {
           <template #header>
             <div class="flex items-start justify-between">
               <div>
-                <h1 class="text-2xl font-bold text-gray-900 mb-2">
+                <h1 class="text-2xl font-bold 900 mb-2">
                   {{ trip.title }}
                 </h1>
-                <p class="text-gray-600">
+                <p class="">
                   {{ trip.description }}
                 </p>
               </div>

@@ -4,10 +4,10 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
 
   runtimeConfig: {
-    openaiApiKey: "",
-    googlePlacesApiKey: "",
+    openaiApiKey: process.env.NUXT_OPENAI_API_KEY || "",
+    googlePlacesApiKey: process.env.NUXT_GOOGLE_PLACES_API_KEY || "",
     public: {
-      googleMapsApiKey: "",
+      googleMapsApiKey: process.env.NUXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
     },
   },
 

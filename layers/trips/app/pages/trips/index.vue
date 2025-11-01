@@ -1,4 +1,11 @@
 <script lang="ts" setup>
+import {
+  budgetOptions,
+  durationOptions,
+  styleOptions,
+  travelerOptions,
+} from "~~/layers/trips/shared/constants/trip-options.constant";
+
 definePageMeta({
   middleware: "auth",
 });
@@ -13,84 +20,16 @@ const numberOfTravelers = ref<number | undefined>(undefined);
 const travelStyle = ref<string | undefined>(undefined);
 const budget = ref<string | undefined>(undefined);
 
-// Options for selects
-const durationOptions = [
-  { label: "1-2 days", value: 2 },
-  { label: "3-4 days", value: 4 },
-  { label: "5-7 days", value: 7 },
-  { label: "1 week", value: 7 },
-  { label: "2 weeks", value: 14 },
-  { label: "3+ weeks", value: 21 },
-];
-
-const travelerOptions = [
-  { label: "Solo travel", value: 1 },
-  { label: "Couple", value: 2 },
-  { label: "Small group (3-4)", value: 4 },
-  { label: "Family (5-6)", value: 6 },
-  { label: "Large group (7+)", value: 8 },
-];
-
-const budgetOptions = [
-  {
-    label: "Budget-friendly",
-    value: "budget",
-    icon: "i-heroicons-currency-dollar-20-solid",
-  },
-  {
-    label: "Mid-range",
-    value: "mid-range",
-    icon: "i-heroicons-banknotes-20-solid",
-  },
-  { label: "Luxury", value: "luxury", icon: "i-heroicons-sparkles-20-solid" },
-  {
-    label: "No budget limit",
-    value: "unlimited",
-    icon: "i-heroicons-infinity-20-solid",
-  },
-];
-
-const styleOptions = [
-  {
-    label: "Adventure & Outdoor",
-    value: "adventure",
-    icon: "i-heroicons-mountain-20-solid",
-  },
-  {
-    label: "Cultural & Historical",
-    value: "cultural",
-    icon: "i-heroicons-building-library-20-solid",
-  },
-  {
-    label: "Relaxation & Beach",
-    value: "relaxation",
-    icon: "i-heroicons-sun-20-solid",
-  },
-  {
-    label: "Food & Culinary",
-    value: "culinary",
-    icon: "i-heroicons-cake-20-solid",
-  },
-  {
-    label: "Urban & City",
-    value: "urban",
-    icon: "i-heroicons-building-office-2-20-solid",
-  },
-  {
-    label: "Nature & Wildlife",
-    value: "nature",
-    icon: "i-heroicons-leaf-20-solid",
-  },
-  { label: "Romantic", value: "romantic", icon: "i-heroicons-heart-20-solid" },
-  {
-    label: "Family-Friendly",
-    value: "family",
-    icon: "i-heroicons-users-20-solid",
-  },
-];
-
 const { tripsExamples, fetchTripsExamples } = useTripsExamples();
 const { createTripAndNavigate } = useTrips();
+
+function handleClearInputs() {
+  input.value = "";
+  tripDuration.value = undefined;
+  numberOfTravelers.value = undefined;
+  travelStyle.value = undefined;
+  budget.value = undefined;
+}
 
 // Functions
 async function handleSubmit(event: Event) {
@@ -101,44 +40,10 @@ async function handleSubmit(event: Event) {
   isLoading.value = true;
 
   try {
-    // Build enhanced trip description with selected options
-    let enhancedDescription = input.value.trim();
-
-    const details = [];
-    if (tripDuration.value) {
-      details.push(`Duration: ${tripDuration.value} days`);
-    }
-    if (numberOfTravelers.value) {
-      const travelerLabel = travelerOptions.find(
-        (opt) => opt.value === numberOfTravelers.value
-      )?.label;
-      details.push(`Travelers: ${travelerLabel}`);
-    }
-    if (travelStyle.value) {
-      const styleLabel = styleOptions.find(
-        (opt) => opt.value === travelStyle.value
-      )?.label;
-      details.push(`Style: ${styleLabel}`);
-    }
-    if (budget.value) {
-      const budgetLabel = budgetOptions.find(
-        (opt) => opt.value === budget.value
-      )?.label;
-      details.push(`Budget: ${budgetLabel}`);
-    }
-
-    if (details.length > 0) {
-      enhancedDescription += ` (${details.join(", ")})`;
-    }
-
-    await createTripAndNavigate(enhancedDescription);
+    await createTripAndNavigate(input.value);
 
     // Reset form
-    input.value = "";
-    tripDuration.value = undefined;
-    numberOfTravelers.value = undefined;
-    travelStyle.value = undefined;
-    budget.value = undefined;
+    handleClearInputs();
   } catch (error) {
     console.error("Error creating trip:", error);
   } finally {
@@ -148,14 +53,6 @@ async function handleSubmit(event: Event) {
 
 async function selectExample(example: TripExample) {
   input.value = example.description;
-  // Reset selects when using an example
-  tripDuration.value = undefined;
-  numberOfTravelers.value = undefined;
-  travelStyle.value = undefined;
-  budget.value = undefined;
-
-  budget.value = undefined;
-
   // Focus the input after selection
   nextTick(() => {
     const textarea = document.querySelector("textarea");
@@ -165,16 +62,6 @@ async function selectExample(example: TripExample) {
     }
   });
 }
-
-// Gemini-inspired functions
-const suggestions = [
-  "Weekend getaway",
-  "Solo adventure",
-  "Family vacation",
-  "Romantic escape",
-  "Budget travel",
-  "Cultural tour",
-];
 
 const dynamicPlaceholder = computed(() => {
   const selections = [];
@@ -254,18 +141,6 @@ const selectedBadges = computed(() => {
   return badges;
 });
 
-function handleQuickAction(text: string) {
-  input.value = text;
-  // Auto-submit for quick actions
-  nextTick(() => {
-    handleSubmit(new Event("submit"));
-  });
-}
-
-function handleSuggestionClick(suggestion: string) {
-  input.value = suggestion;
-}
-
 function clearSelection(key: string) {
   switch (key) {
     case "duration":
@@ -327,10 +202,10 @@ await Promise.all([fetchTripsExamples()]);
             Recent ideas
           </h3>
           <div class="space-y-2">
-            <button
+            <UCard
               v-for="example in tripsExamples"
               :key="example.title"
-              class="w-full backdrop-blur-sm border border-gray-700/30 rounded-xl p-3 text-left"
+              variant="subtle"
               @click="selectExample(example)"
             >
               <div class="text-sm font-medium mb-1">
@@ -339,7 +214,7 @@ await Promise.all([fetchTripsExamples()]);
               <div class="text-xs text-gray-500 line-clamp-2">
                 {{ example.description }}
               </div>
-            </button>
+            </UCard>
           </div>
         </div>
       </div>
@@ -375,7 +250,6 @@ await Promise.all([fetchTripsExamples()]);
                 v-model="input"
                 :placeholder="dynamicPlaceholder"
                 :rows="2"
-                :max-rows="4"
                 autoresize
                 :disabled="isLoading"
                 class="w-full placeholder:text-gray-400 resize-none"
@@ -385,13 +259,20 @@ await Promise.all([fetchTripsExamples()]);
             <div class="my-3 flex justify-between">
               <!-- Options Toggle -->
               <UButton
-                icon="i-heroicons-plus-16-solid"
+                class="transition-all"
+                variant="subtle"
+                :icon="
+                  showOptions
+                    ? 'i-heroicons-chevron-down-16-solid'
+                    : 'i-heroicons-adjustments-vertical-16-solid'
+                "
                 @click="showOptions = !showOptions"
               />
 
               <UButton
                 type="submit"
                 :disabled="!input.trim() || isLoading"
+                :loading="isLoading"
                 icon="i-heroicons-arrow-up-16-solid"
               />
             </div>
@@ -408,14 +289,14 @@ await Promise.all([fetchTripsExamples()]);
           >
             <div
               v-if="showOptions"
-              class="my-4 p-4 backdrop-blur-sm border border-gray-700/30 rounded-2xl"
+              class="my-4 p-4 backdrop-blur-sm border border-gray-700/30 rounded-lg"
             >
               <div class="grid grid-cols-2 gap-3 mb-4">
                 <!-- Duration -->
                 <div>
-                  <label class="block text-xs font-medium text-gray-400 mb-2"
-                    >Duration</label
-                  >
+                  <label class="block text-xs font-medium text-gray-400 mb-2">
+                    Duration
+                  </label>
                   <USelect
                     v-model="tripDuration"
                     :items="durationOptions"

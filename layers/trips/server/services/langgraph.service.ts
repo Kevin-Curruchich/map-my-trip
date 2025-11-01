@@ -55,6 +55,7 @@ const OverallState = z.object({
   graphOutput: OutputState,
   title: z.string(),
   description: z.string(),
+  destination: z.string().describe("The main destination of the trip"),
   itinerary: z.array(
     z.object({
       day: z.number(),
@@ -97,15 +98,21 @@ async function generateTripMetadata(state: z.infer<typeof OverallState>) {
           .string()
           .describe("A catchy and concise title for the trip"),
         tripDescription: z.string().describe("A brief description of the trip"),
+        tripDestination: z
+          .string()
+          .describe("The main destination of the trip"),
       })
     )
     .invoke(
-      `Based on the following trip idea: "${state.prompt}", generate a catchy and concise title and description for the trip.`
+      `Based on the following trip idea: "${state.prompt}", generate a catchy and concise title and description for the trip
+        with the main destination being "${state.destination}"
+      `
     );
 
   return {
     title: msg.tripTitle,
     description: msg.tripDescription,
+    destination: msg.tripDestination,
   };
 }
 
@@ -113,7 +120,11 @@ async function generateTripTags(state: z.infer<typeof OverallState>) {
   const msg = await llm
     .withStructuredOutput(
       z.object({
-        tripTags: z.array(z.string()).describe("Tags related to the trip"),
+        tripTags: z
+          .array(z.string())
+          .min(5)
+          .max(8)
+          .describe("Tags related to the trip"),
       })
     )
     .invoke(
@@ -129,7 +140,7 @@ async function generateTripTags(state: z.infer<typeof OverallState>) {
 
 async function searchGooglePlaces(state: z.infer<typeof OverallState>) {
   const searchQueries = state.tripTags.map(
-    (tag) => `${tag} in popular tourist destinations`
+    (tag) => `${tag} in ${state.destination}`
   );
 
   const placesResults = [];
@@ -182,11 +193,24 @@ async function generateTripItinerary(state: z.infer<typeof OverallState>) {
       })
     )
     .invoke(
-      `Based on the following trip idea: "${
-        state.prompt
-      }" and the following places: ${JSON.stringify(
-        state.tripPlaces
-      )}, generate a detailed itinerary for ${1} days.`
+      `Create a detailed ${1}-day itinerary for "${state.prompt}" in ${
+        state.destination
+      }.
+
+  Available places to include:
+  ${JSON.stringify(state.tripPlaces)}
+
+  Requirements:
+  - Balance different activity types (eating, sightseeing, relaxation, etc.)
+  - Consider logical timing and travel distances between locations
+  - Use provided place IDs when referencing specific venues
+  - Include realistic time slots (e.g., "9:00 AM", "2:30 PM")
+  - Suggest appropriate durations (e.g., "2 hours", "45 minutes")
+  - Provide helpful notes for each activity (tips, what to expect, etc.)
+  - Start each day around 8-9 AM and end by 8-9 PM
+  - Group nearby activities together to minimize travel time
+
+  Create an engaging, practical itinerary that maximizes the travel experience while being realistic about timing and logistics.`
     );
 
   const itinerary = msg.itinerary.map((day) => ({
