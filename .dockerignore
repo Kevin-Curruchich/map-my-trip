@@ -1,0 +1,16 @@
+node_modules
+.output
+.nuxt
+.nitro
+.cache
+.data
+dist
+.git
+.github
+.husky
+.vscode
+.env
+.env.*
+*.log
+Dockerfile
+.dockerignore

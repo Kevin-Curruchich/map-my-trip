@@ -1,11 +1,12 @@
+// Values are overridden at runtime by NUXT_* environment variables,
+// e.g. NUXT_OPENAI_API_KEY or NUXT_PUBLIC_GOOGLE_MAPS_API_KEY.
 export default defineNuxtConfig({
-  // Read at build time: Amplify Hosting does not expose env vars to the SSR runtime.
   runtimeConfig: {
-    openaiApiKey: process.env.NUXT_OPENAI_API_KEY || "",
-    googlePlacesApiKey: process.env.NUXT_GOOGLE_PLACES_API_KEY || "",
+    openaiApiKey: "",
+    googlePlacesApiKey: "",
     public: {
-      googleMapsApiKey: process.env.NUXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
-      googleMapsMapId: process.env.NUXT_PUBLIC_GOOGLE_MAPS_MAP_ID || "d5e33afae207e196df9e7830",
+      googleMapsApiKey: "",
+      googleMapsMapId: "d5e33afae207e196df9e7830",
     },
   },
 });

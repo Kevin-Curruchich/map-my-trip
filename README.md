@@ -27,7 +27,7 @@ At its core, MapMyTrip is an intelligent travel planning assistant. It allows us
 - [LangGraph](https://langchain-ai.github.io/langgraphjs/) + OpenAI for trip generation
 - Google Places API (New) and Google Maps JavaScript API
 - [nuxt-auth-utils](https://github.com/atinux/nuxt-auth-utils) for Google OAuth
-- Deployed on AWS Amplify Hosting
+- Deployed on Google Cloud Run ([setup guide](docs/deploy-cloud-run.md))
 
 ## Setup
 
@@ -50,13 +50,13 @@ NUXT_PUBLIC_GOOGLE_MAPS_API_KEY=
 NUXT_PUBLIC_GOOGLE_MAPS_MAP_ID= # optional
 ```
 
-> Amplify Hosting does not expose environment variables to the SSR runtime, so they are read at build time in each layer's `nuxt.config.ts`.
+> All values are read at runtime, so the same build works in every environment.
 
 ## Scripts
 
 ```bash
 pnpm dev        # development server on http://localhost:3000
-pnpm build      # production build (aws-amplify preset)
+pnpm build      # production build (Node server in .output/)
 pnpm preview    # preview the production build
 pnpm lint       # eslint --fix
 pnpm typecheck  # vue-tsc via nuxt typecheck

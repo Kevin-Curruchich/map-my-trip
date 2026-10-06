@@ -4,7 +4,4 @@ export default defineNuxtConfig({
   compatibilityDate: "2026-10-01",
   devtools: { enabled: true },
   modules: ["@nuxt/eslint"],
-  nitro: {
-    preset: "aws-amplify",
-  },
 });
