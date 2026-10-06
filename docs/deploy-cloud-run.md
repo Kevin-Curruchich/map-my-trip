@@ -13,7 +13,7 @@ Run these commands in [Cloud Shell](https://shell.cloud.google.com) or any termi
 Adjust the first block.
 
 ```bash
-PROJECT_ID="your-project-id"
+PROJECT_ID="your-project-id"   # the project ID (gcloud projects list), not its display name
 REGION="us-central1"
 GITHUB_REPO="Kevin-Curruchich/map-my-trip"
 
@@ -48,11 +48,12 @@ RUNTIME_SA="map-my-trip-runtime@$PROJECT_ID.iam.gserviceaccount.com"
 DEPLOYER_SA="github-deployer@$PROJECT_ID.iam.gserviceaccount.com"
 
 gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-  --member="serviceAccount:$RUNTIME_SA" --role="roles/secretmanager.secretAccessor"
+  --member="serviceAccount:$RUNTIME_SA" --role="roles/secretmanager.secretAccessor" \
+  --condition=None
 
 for role in roles/run.admin roles/artifactregistry.writer; do
   gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-    --member="serviceAccount:$DEPLOYER_SA" --role="$role"
+    --member="serviceAccount:$DEPLOYER_SA" --role="$role" --condition=None
 done
 
 # Let the deployer launch the service as the runtime account.
@@ -94,8 +95,8 @@ and redeploy.
 
 ### 6. Configure GitHub
 
-In **Settings → Environments**, create an environment named `production` and add these
-**variables** (none of them are secret):
+In **Settings → Environments**, create an environment named `production` and add these as
+**Environment variables** (not *Environment secrets*; none of them are secret):
 
 | Variable | Value |
 |---|---|

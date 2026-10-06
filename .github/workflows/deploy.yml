@@ -9,19 +9,34 @@ concurrency:
   group: deploy-production
   cancel-in-progress: false
 
-env:
-  REGION: ${{ vars.GCP_REGION }}
-  SERVICE: map-my-trip
-  IMAGE: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/map-my-trip/app:${{ github.sha }}
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: production
+    # Defined at job level: environment variables (vars.*) are only
+    # resolved inside jobs that reference the environment.
+    env:
+      REGION: ${{ vars.GCP_REGION }}
+      SERVICE: map-my-trip
+      IMAGE: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/map-my-trip/app:${{ github.sha }}
     permissions:
       contents: read
       id-token: write # required for Workload Identity Federation
     steps:
+      - name: Check required variables
+        run: |
+          missing=0
+          for name in GCP_PROJECT_ID GCP_REGION GCP_WORKLOAD_IDENTITY_PROVIDER GCP_DEPLOY_SERVICE_ACCOUNT GCP_RUNTIME_SERVICE_ACCOUNT; do
+            if [ -z "${!name}" ]; then echo "::error::Missing variable $name in the 'production' environment"; missing=1; fi
+          done
+          exit $missing
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          GCP_REGION: ${{ vars.GCP_REGION }}
+          GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          GCP_DEPLOY_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+          GCP_RUNTIME_SERVICE_ACCOUNT: ${{ vars.GCP_RUNTIME_SERVICE_ACCOUNT }}
+
       - uses: actions/checkout@v7
 
       - id: auth
