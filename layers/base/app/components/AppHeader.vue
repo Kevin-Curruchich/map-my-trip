@@ -7,6 +7,7 @@ const { loggedIn, userName, userPicture, logout } = useAuth();
 const userMenu = computed<DropdownMenuItem[]>(() => [
   { label: userName.value, type: "label", icon: "i-lucide-user" },
   { type: "separator" },
+  { label: "Mis planes", icon: "i-lucide-list", to: "/plans" },
   { label: "Sign out", icon: "i-lucide-log-out", onSelect: logout },
 ]);
 </script>
@@ -23,9 +24,14 @@ const userMenu = computed<DropdownMenuItem[]>(() => [
         </span>
       </NuxtLink>
 
-      <UDropdownMenu v-if="loggedIn" :items="userMenu">
-        <UAvatar :src="userPicture" :alt="userName" size="sm" class="cursor-pointer" />
-      </UDropdownMenu>
+      <div v-if="loggedIn" class="flex items-center gap-3">
+        <UButton to="/plans" variant="ghost" color="neutral" size="sm" icon="i-lucide-list">
+          Mis planes
+        </UButton>
+        <UDropdownMenu :items="userMenu">
+          <UAvatar :src="userPicture" :alt="userName" size="sm" class="cursor-pointer" />
+        </UDropdownMenu>
+      </div>
 
       <div v-else class="flex items-center gap-4">
         <p class="hidden text-sm text-muted sm:block">

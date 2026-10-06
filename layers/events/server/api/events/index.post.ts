@@ -6,6 +6,8 @@ const createSlug = customAlphabet("23456789abcdefghjkmnpqrstuvwxyz", 8);
 
 export default defineEventHandler(async (event) => {
   const body = await readValidatedBody(event, CreateEventBodySchema.parse);
+  // Signing in is optional; when signed in, the plan shows up in "Mis planes".
+  const { user } = await getUserSession(event);
 
   const [created] = await useDb()
     .insert(tables.events)
@@ -18,6 +20,7 @@ export default defineEventHandler(async (event) => {
       longitude: body.location.longitude ?? null,
       date: body.date ?? null,
       description: body.description || null,
+      ownerSub: user?.sub ?? null,
     })
     .returning({ slug: tables.events.slug });
 

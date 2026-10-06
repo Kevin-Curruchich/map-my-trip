@@ -28,3 +28,11 @@ export const PlaceSearchQuerySchema = z.object({
   lat: z.coerce.number().min(-90).max(90).optional(),
   lng: z.coerce.number().min(-180).max(180).optional(),
 });
+
+export const EventSlugListQuerySchema = z.object({
+  slugs: z
+    .string()
+    .default("")
+    .transform((value) => value.split(",").filter(Boolean))
+    .pipe(z.array(z.string().regex(/^[a-z0-9]{8}$/)).max(50)),
+});

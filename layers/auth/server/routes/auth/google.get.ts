@@ -21,7 +21,7 @@ export default defineOAuthGoogleEventHandler({
       loggedInAt: new Date(),
     });
 
-    return sendRedirect(event, "/trips");
+    return sendRedirect(event, "/plans");
   },
   onError(event, error) {
     console.error("Google OAuth error:", error);
