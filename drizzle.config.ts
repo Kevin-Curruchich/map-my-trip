@@ -5,4 +5,5 @@ export default defineConfig({
   dialect: "postgresql",
   schema: "./layers/events/server/database/schema.ts",
   out: "./layers/events/server/database/migrations",
+  schemaFilter: ["map_my_trip_db"],
 });

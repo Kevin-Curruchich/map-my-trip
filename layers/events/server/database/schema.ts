@@ -2,13 +2,18 @@ import {
   date,
   doublePrecision,
   index,
-  pgTable,
+  pgSchema,
   text,
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
 
-export const events = pgTable("events", {
+// All app tables live in this schema of the shared Supabase database,
+// not in `public`.
+export const DB_SCHEMA = "map_my_trip_db";
+export const appSchema = pgSchema(DB_SCHEMA);
+
+export const events = appSchema.table("events", {
   id: uuid("id").primaryKey().defaultRandom(),
   // Short public id used in the shared link: /e/<slug>
   slug: text("slug").notNull().unique(),
@@ -26,7 +31,7 @@ export const events = pgTable("events", {
     .defaultNow(),
 });
 
-export const participants = pgTable(
+export const participants = appSchema.table(
   "participants",
   {
     id: uuid("id").primaryKey().defaultRandom(),

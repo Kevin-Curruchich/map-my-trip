@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
+import { DB_SCHEMA } from "../database/schema";
 
 // Arbitrary constant so concurrent instances don't migrate at the same time.
 const MIGRATION_LOCK_ID = 727274;
@@ -22,7 +23,11 @@ export default defineNitroPlugin(async () => {
   const client = postgres(databaseUrl, { max: 1, onnotice: () => {} });
   try {
     await client`select pg_advisory_lock(${MIGRATION_LOCK_ID})`;
-    await migrate(drizzle(client), { migrationsFolder });
+    // The migrations log lives next to the tables instead of a separate schema.
+    await migrate(drizzle(client), {
+      migrationsFolder,
+      migrationsSchema: DB_SCHEMA,
+    });
   } catch (error) {
     console.error("Database migration failed:", error);
     throw error;
