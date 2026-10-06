@@ -25,6 +25,7 @@ const toast = useToast();
 
 const { suggestions, isSearching, isLocating, search, locate } =
   useEventLocation();
+const { saveOwnerToken } = useEventOwner();
 
 interface LocationItem {
   label: string;
@@ -102,7 +103,7 @@ async function onSubmit() {
 
   isLoading.value = true;
   try {
-    const { slug } = await $fetch("/api/events", {
+    const { slug, ownerToken } = await $fetch("/api/events", {
       method: "POST",
       body: {
         title: title.value,
@@ -111,6 +112,7 @@ async function onSubmit() {
         description: description.value || undefined,
       },
     });
+    if (ownerToken) saveOwnerToken(slug, ownerToken);
     await navigateTo(`/e/${slug}`);
   } catch (error) {
     console.error("Error creating event:", error);

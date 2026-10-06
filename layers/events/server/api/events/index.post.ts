@@ -1,4 +1,4 @@
-import { customAlphabet } from "nanoid";
+import { customAlphabet, nanoid } from "nanoid";
 import { CreateEventBodySchema } from "../../schemas";
 
 // Short, unambiguous slugs that read well in a WhatsApp message.
@@ -21,8 +21,12 @@ export default defineEventHandler(async (event) => {
       date: body.date ?? null,
       description: body.description || null,
       ownerSub: user?.sub ?? null,
+      ownerToken: nanoid(32),
     })
-    .returning({ slug: tables.events.slug });
+    .returning({
+      slug: tables.events.slug,
+      ownerToken: tables.events.ownerToken,
+    });
 
   return created!;
 });

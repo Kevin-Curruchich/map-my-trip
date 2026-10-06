@@ -29,6 +29,7 @@ export default defineEventHandler(async (event) => {
         title: tables.events.title,
         city: tables.events.city,
         date: tables.events.date,
+        status: tables.events.status,
         ownerSub: tables.events.ownerSub,
         createdAt: tables.events.createdAt,
       })

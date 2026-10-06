@@ -36,3 +36,38 @@ export const EventSlugListQuerySchema = z.object({
     .transform((value) => value.split(",").filter(Boolean))
     .pipe(z.array(z.string().regex(/^[a-z0-9]{8}$/)).max(50)),
 });
+
+export const VoteBodySchema = z.object({
+  participantId: z.uuid(),
+  proposalId: z.uuid(),
+});
+
+export const CloseEventBodySchema = z.object({
+  // Defaults to the most voted proposal.
+  proposalId: z.uuid().optional(),
+});
+
+export const GeneratedProposalsSchema = z.object({
+  proposals: z
+    .array(
+      z.object({
+        title: z
+          .string()
+          .describe("Nombre corto del plan, empezando con un emoji"),
+        description: z
+          .string()
+          .describe(
+            "Dos frases: qué harán y por qué le sirve a este grupo según lo que pidieron"
+          ),
+        budget: z
+          .enum(eventBudgetValues)
+          .describe("Costo por persona: low, medium o high"),
+        steps: z
+          .array(z.string())
+          .describe(
+            "De 2 a 4 pasos en orden, cada uno con un lugar real de la zona si es posible"
+          ),
+      })
+    )
+    .length(3),
+});
