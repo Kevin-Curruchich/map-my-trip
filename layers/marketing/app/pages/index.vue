@@ -8,6 +8,7 @@
       orientation="horizontal"
       :links="[
         { label: 'Sign Up', to: '/login', color: 'primary', size: 'lg' },
+        { label: 'Planear con mi grupo', to: '/e/new', variant: 'outline', size: 'lg' },
         { label: 'Why MapMyTrip?', to: '#why-choose-us', variant: 'subtle' },
       ]"
     />
