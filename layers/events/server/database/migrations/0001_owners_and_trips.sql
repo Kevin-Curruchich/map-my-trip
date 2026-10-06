@@ -1,4 +1,4 @@
-CREATE TABLE "map_my_trip_db"."trips" (
+CREATE TABLE "map_my_trip_db"."saved_trips" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"owner_sub" text NOT NULL,
 	"title" text NOT NULL,
@@ -9,5 +9,5 @@ CREATE TABLE "map_my_trip_db"."trips" (
 );
 --> statement-breakpoint
 ALTER TABLE "map_my_trip_db"."events" ADD COLUMN "owner_sub" text;--> statement-breakpoint
-CREATE INDEX "trips_owner_sub_idx" ON "map_my_trip_db"."trips" USING btree ("owner_sub");--> statement-breakpoint
+CREATE INDEX "saved_trips_owner_sub_idx" ON "map_my_trip_db"."saved_trips" USING btree ("owner_sub");--> statement-breakpoint
 CREATE INDEX "events_owner_sub_idx" ON "map_my_trip_db"."events" USING btree ("owner_sub");

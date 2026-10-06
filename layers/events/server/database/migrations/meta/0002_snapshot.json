@@ -304,8 +304,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "map_my_trip_db.trips": {
-      "name": "trips",
+    "map_my_trip_db.saved_trips": {
+      "name": "saved_trips",
       "schema": "map_my_trip_db",
       "columns": {
         "id": {
@@ -354,8 +354,8 @@
         }
       },
       "indexes": {
-        "trips_owner_sub_idx": {
-          "name": "trips_owner_sub_idx",
+        "saved_trips_owner_sub_idx": {
+          "name": "saved_trips_owner_sub_idx",
           "columns": [
             {
               "expression": "owner_sub",
