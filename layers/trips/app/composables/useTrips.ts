@@ -1,6 +1,6 @@
 import { importLibrary } from "@googlemaps/js-api-loader";
 
-async function resolveActivityLocations(
+export async function resolveActivityLocations(
   itinerary: ItineraryDay[]
 ): Promise<ActivityWithPlace[]> {
   const { Place } = await importLibrary("places");
@@ -42,7 +42,6 @@ export default function useTrips() {
 
     const trip: Trip = {
       ...generated,
-      id: crypto.randomUUID(),
       activitiesWithPlaces: await resolveActivityLocations(
         generated.itinerary
       ),

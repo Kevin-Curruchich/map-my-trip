@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import type { TimelineItem } from "@nuxt/ui";
 
+definePageMeta({
+  middleware: "auth",
+});
+
 const route = useRoute();
 const toast = useToast();
-const { trip } = useTrip(() => String(route.params.id));
+const { trip, notFound } = useTrip(() => String(route.params.id));
 const { createTripAndNavigate } = useTrips();
 
 useSeoMeta({
@@ -66,12 +70,16 @@ async function duplicateTrip() {
 <template>
   <div class="container mx-auto max-w-4xl px-4 py-8">
     <UEmpty
-      v-if="!trip"
+      v-if="!trip && notFound"
       icon="i-lucide-map"
       title="Trip not found"
-      description="Trips are kept only for this session. Create a new one to get started."
-      :actions="[{ label: 'Plan a trip', to: '/trips' }]"
+      description="It may have been deleted or belong to another account."
+      :actions="[{ label: 'Plan a trip', to: '/trips' }, { label: 'Mis planes', to: '/plans', variant: 'outline' }]"
     />
+
+    <div v-else-if="!trip" class="flex justify-center py-24">
+      <UIcon name="i-lucide-loader-circle" class="size-8 animate-spin text-muted" />
+    </div>
 
     <template v-else>
       <UButton

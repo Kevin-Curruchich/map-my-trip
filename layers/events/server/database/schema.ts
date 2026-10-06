@@ -2,6 +2,7 @@ import {
   date,
   doublePrecision,
   index,
+  jsonb,
   pgSchema,
   text,
   timestamp,
@@ -26,10 +27,12 @@ export const events = appSchema.table("events", {
   longitude: doublePrecision("longitude"),
   date: date("date", { mode: "string" }),
   description: text("description"),
+  // Google account (`sub`) of the creator when they were signed in.
+  ownerSub: text("owner_sub"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (table) => [index("events_owner_sub_idx").on(table.ownerSub)]);
 
 export const participants = appSchema.table(
   "participants",
@@ -46,6 +49,23 @@ export const participants = appSchema.table(
       .defaultNow(),
   },
   (table) => [index("participants_event_id_idx").on(table.eventId)]
+);
+
+// Trips generated from /trips, kept so the owner can find them again.
+export const trips = appSchema.table(
+  "trips",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerSub: text("owner_sub").notNull(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    destination: text("destination").notNull(),
+    itinerary: jsonb("itinerary").$type<ItineraryDay[]>().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("trips_owner_sub_idx").on(table.ownerSub)]
 );
 
 export type EventRecord = typeof events.$inferSelect;

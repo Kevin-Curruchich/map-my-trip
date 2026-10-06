@@ -22,5 +22,17 @@ export default function useJoinedEvents() {
     }
   }
 
-  return { getParticipantId, markJoined };
+  function listJoinedSlugs() {
+    if (import.meta.server) return [];
+    try {
+      const prefix = storageKey("");
+      return Object.keys(localStorage)
+        .filter((key) => key.startsWith(prefix))
+        .map((key) => key.slice(prefix.length));
+    } catch {
+      return [];
+    }
+  }
+
+  return { getParticipantId, markJoined, listJoinedSlugs };
 }
