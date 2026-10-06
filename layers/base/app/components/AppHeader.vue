@@ -1,70 +1,37 @@
 <script lang="ts" setup>
-const appCong = useAppConfig();
-const router = useRouter();
-const { isAuthenticated, userName, userPicture, logout } = useAuth();
+import type { DropdownMenuItem } from "@nuxt/ui";
 
-async function handleCreateTrip() {
-  if (!isAuthenticated.value) {
-    await router.push("/login");
-    return;
-  }
+const appConfig = useAppConfig();
+const { loggedIn, userName, userPicture, logout } = useAuth();
 
-  await router.push("/trips");
-}
-
-async function handleLogout() {
-  await logout();
-}
+const userMenu = computed<DropdownMenuItem[]>(() => [
+  { label: userName.value, type: "label", icon: "i-lucide-user" },
+  { type: "separator" },
+  { label: "Sign out", icon: "i-lucide-log-out", onSelect: logout },
+]);
 </script>
 
 <template>
-  <header
-    class="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border"
-  >
-    <div class="container mx-auto px-4 py-4">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-          <div
-            class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center"
-          >
-            <span class="text-primary-foreground font-bold text-lg">M</span>
-          </div>
-          <h1 class="text-xl font-bold text-foreground">
-            {{ appCong.title }}
-          </h1>
+  <header class="sticky top-0 z-50 border-b border-default bg-default/80 backdrop-blur-md">
+    <div class="container mx-auto flex items-center justify-between px-4 py-4">
+      <NuxtLink to="/" class="flex items-center gap-3">
+        <div class="flex size-8 items-center justify-center rounded-lg bg-primary">
+          <span class="text-lg font-bold text-inverted">M</span>
         </div>
-        <div v-if="isAuthenticated">
-          <UDropdownMenu
-            :items="[
-              {
-                label: userName,
-                type: 'label',
-                icon: 'i-lucide-user',
-              },
-              { type: 'separator' },
-              {
-                label: 'Sign out',
-                icon: 'i-lucide-log-out',
-                onSelect: handleLogout,
-              },
-            ]"
-          >
-            <UAvatar
-              :src="userPicture"
-              :alt="userName"
-              size="sm"
-              class="cursor-pointer"
-            />
-          </UDropdownMenu>
-        </div>
-        <div v-else class="flex items-center space-x-4">
-          <p class="text-sm text-muted-foreground hidden sm:block">
-            Your AI-powered travel planning assistant
-          </p>
-          <UButton variant="outline" size="sm" @click="handleCreateTrip">
-            New Trip
-          </UButton>
-        </div>
+        <span class="text-xl font-bold text-highlighted">
+          {{ appConfig.title }}
+        </span>
+      </NuxtLink>
+
+      <UDropdownMenu v-if="loggedIn" :items="userMenu">
+        <UAvatar :src="userPicture" :alt="userName" size="sm" class="cursor-pointer" />
+      </UDropdownMenu>
+
+      <div v-else class="flex items-center gap-4">
+        <p class="hidden text-sm text-muted sm:block">
+          Your AI-powered travel planning assistant
+        </p>
+        <UButton variant="outline" size="sm" to="/trips">New Trip</UButton>
       </div>
     </div>
   </header>

@@ -1,0 +1,72 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  REGION: ${{ vars.GCP_REGION }}
+  SERVICE: map-my-trip
+  IMAGE: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/map-my-trip/app:${{ github.sha }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      id-token: write # required for Workload Identity Federation
+    steps:
+      - uses: actions/checkout@v7
+
+      - id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+          token_format: access_token
+
+      - name: Log in to Artifact Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGION }}-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Build and push image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Deploy
+        uses: google-github-actions/deploy-cloudrun@v3
+        with:
+          service: ${{ env.SERVICE }}
+          region: ${{ env.REGION }}
+          image: ${{ env.IMAGE }}
+          flags: >-
+            --service-account=${{ vars.GCP_RUNTIME_SERVICE_ACCOUNT }}
+            --allow-unauthenticated
+            --min-instances=0
+            --max-instances=3
+            --timeout=300
+          env_vars: |-
+            NUXT_OAUTH_GOOGLE_CLIENT_ID=${{ vars.OAUTH_GOOGLE_CLIENT_ID }}
+            NUXT_OAUTH_GOOGLE_REDIRECT_URL=${{ vars.OAUTH_GOOGLE_REDIRECT_URL }}
+            NUXT_PUBLIC_GOOGLE_MAPS_API_KEY=${{ vars.GOOGLE_MAPS_API_KEY }}
+          secrets: |-
+            NUXT_SESSION_PASSWORD=session-password:latest
+            NUXT_OAUTH_GOOGLE_CLIENT_SECRET=oauth-google-client-secret:latest
+            NUXT_OPENAI_API_KEY=openai-api-key:latest
+            NUXT_GOOGLE_PLACES_API_KEY=google-places-api-key:latest

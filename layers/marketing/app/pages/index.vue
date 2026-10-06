@@ -1,4 +1,3 @@
-<script setup></script>
 <template>
   <div>
     <!-- Hero Section -->
@@ -65,7 +64,3 @@
     </UFooter>
   </div>
 </template>
-
-<style scoped>
-/* Add any custom styles here */
-</style>

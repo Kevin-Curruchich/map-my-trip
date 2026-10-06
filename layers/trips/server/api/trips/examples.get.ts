@@ -1,24 +1,19 @@
-import { CreateTripExampleSchema } from "../../schemas";
+import { TripExamplesQuerySchema } from "../../schemas";
 import { getTripExamples } from "../../services/trip-generator.service";
 
 export default defineCachedEventHandler(
   async (event) => {
-    const query = await getValidatedQuery(event, CreateTripExampleSchema.parse);
+    const { lang } = await getValidatedQuery(
+      event,
+      TripExamplesQuerySchema.parse
+    );
 
-    const store = useStorage("local");
-    await store.setItem("newTripCreated", false);
-
-    return getTripExamples({ lang: query.lang });
+    return getTripExamples(lang);
   },
   {
     name: "trip-examples",
-    maxAge: 60 * 60 * 24, // Cache for 24 hours
+    getKey: (event) => String(getQuery(event).lang ?? "default"),
+    maxAge: 60 * 60 * 24,
     swr: true,
-    async shouldInvalidateCache() {
-      const storage = useStorage("local");
-      const newTripCreated = await storage.getItem<boolean>("newTripCreated");
-
-      return newTripCreated || false;
-    },
   }
 );
