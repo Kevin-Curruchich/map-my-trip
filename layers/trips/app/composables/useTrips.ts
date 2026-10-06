@@ -1,48 +1,56 @@
 import { importLibrary } from "@googlemaps/js-api-loader";
 
+async function resolveActivityLocations(
+  itinerary: ItineraryDay[]
+): Promise<ActivityWithPlace[]> {
+  const { Place } = await importLibrary("places");
+  const activities = itinerary.flatMap((day) => day.activities);
+
+  const resolved = await Promise.all(
+    activities.map(async (activity) => {
+      if (!activity.placeId) return null;
+
+      try {
+        const place = new Place({ id: activity.placeId });
+        await place.fetchFields({ fields: ["location"] });
+
+        if (!place.location) return null;
+
+        return {
+          ...activity,
+          latitude: place.location.lat(),
+          longitude: place.location.lng(),
+        };
+      } catch (error) {
+        console.error(`Could not resolve place ${activity.placeId}:`, error);
+        return null;
+      }
+    })
+  );
+
+  return resolved.filter((activity) => activity !== null);
+}
+
 export default function useTrips() {
   const trips = useState<Trip[]>("trips", () => []);
 
   async function createTrip(prompt: string) {
-    const { response } = await $fetch("/api/trips", {
+    const generated = await $fetch("/api/trips", {
       method: "POST",
-      body: { prompt: prompt },
+      body: { prompt },
     });
-    const { Place } = await importLibrary("places");
 
-    const activitiesWithPlaces = [];
+    const trip: Trip = {
+      ...generated,
+      id: crypto.randomUUID(),
+      activitiesWithPlaces: await resolveActivityLocations(
+        generated.itinerary
+      ),
+    };
 
-    for (const day of response.itinerary) {
-      for (const activity of day.activities) {
-        if (activity?.placeId) {
-          const place = new Place({
-            id: activity.placeId,
-          });
+    trips.value.push(trip);
 
-          try {
-            await place.fetchFields({
-              fields: ["location"],
-            });
-          } catch (e) {
-            console.error("Error fetching place data:", e);
-            continue; // Skip this activity if there's an error fetching place data
-          }
-
-          if (place && place?.location) {
-            activitiesWithPlaces.push({
-              ...activity,
-              latitude: place.location.lat(),
-              longitude: place.location.lng(),
-            });
-          }
-        }
-      }
-    }
-
-    const tripWithId = { id: crypto.randomUUID(), ...response };
-    trips.value.push({ ...tripWithId, activitiesWithPlaces });
-
-    return tripWithId;
+    return trip;
   }
 
   async function createTripAndNavigate(prompt: string) {

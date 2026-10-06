@@ -7,18 +7,16 @@ export default defineOAuthGoogleEventHandler({
       });
     }
 
-    const googleUser: GoogleUser = {
-      sub: user.sub,
-      email: user.email,
-      email_verified: user.email_verified,
-      name: user.name,
-      given_name: user.given_name,
-      family_name: user.family_name,
-      picture: user.picture,
-    };
-
     await setUserSession(event, {
-      user: googleUser,
+      user: {
+        sub: user.sub,
+        email: user.email,
+        email_verified: user.email_verified,
+        name: user.name,
+        given_name: user.given_name,
+        family_name: user.family_name,
+        picture: user.picture,
+      },
       provider: "google",
       loggedInAt: new Date(),
     });
@@ -27,6 +25,6 @@ export default defineOAuthGoogleEventHandler({
   },
   onError(event, error) {
     console.error("Google OAuth error:", error);
-    return sendRedirect(event, "/");
+    return sendRedirect(event, "/login");
   },
 });

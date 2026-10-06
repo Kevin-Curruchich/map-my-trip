@@ -1,26 +1,19 @@
 export const useAuth = () => {
   const { user, loggedIn, clear } = useUserSession();
 
-  const isAuthenticated = computed(() => loggedIn.value);
-  const userName = computed(() => (user.value as GoogleUser)?.name || "Guest");
-  const userPicture = computed(() => (user.value as GoogleUser)?.picture || "");
+  const userName = computed(() => user.value?.name ?? "Guest");
+  const userPicture = computed(() => user.value?.picture ?? "");
 
-  const logout = async () => {
-    try {
-      await clear();
-      // Optionally, redirect to the homepage or login page after logout
-      await navigateTo("/");
-    } catch (error) {
-      console.error("Error during logout:", error);
-    }
-  };
+  async function logout() {
+    await clear();
+    await navigateTo("/");
+  }
 
   return {
-    user: readonly(user),
+    user,
     loggedIn,
-    logout,
-    isAuthenticated,
     userName,
     userPicture,
+    logout,
   };
 };

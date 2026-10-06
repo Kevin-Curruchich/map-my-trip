@@ -1,32 +1,16 @@
-import { CreateTripInputState } from "../../schemas";
-import { tripGenerator } from "../../services/trip-generator.service";
+import { CreateTripBodySchema } from "../../schemas";
+import { generateTrip } from "../../services/trip-generator.service";
 
 export default defineEventHandler(async (event) => {
-  const { success, data } = await readValidatedBody(
-    event,
-    CreateTripInputState.safeParse
-  );
-
-  if (!success) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Invalid request body",
-    });
-  }
+  const { prompt } = await readValidatedBody(event, CreateTripBodySchema.parse);
 
   try {
-    const response = await tripGenerator(data.prompt);
-
-    const store = useStorage("local");
-    await store.setItem("newTripCreated", true);
-
-    return { response: response };
+    return await generateTrip(prompt);
   } catch (error) {
+    console.error("Failed to generate trip:", error);
     throw createError({
       statusCode: 500,
-      statusMessage:
-        "Failed to generate trip" +
-        (error instanceof Error ? `: ${error.message}` : ""),
+      statusMessage: "Failed to generate trip",
     });
   }
 });

@@ -3,23 +3,10 @@ export interface TripExample {
   description: string;
 }
 
-export interface Trip {
+export interface TripPlace {
   id: string;
-  title: string;
-  description: string;
-  itinerary: ItineraryDay[];
-  activitiesWithPlaces?: ActivityWithPlace[];
-}
-
-export interface ActivityWithPlace {
   name: string;
-  latitude?: number;
-  longitude?: number;
-}
-
-export interface ItineraryDay {
-  day: number;
-  activities: Activity[];
+  address: string;
 }
 
 export interface Activity {
@@ -27,15 +14,30 @@ export interface Activity {
   name: string;
   activityType: ActivityType;
   location: string;
-  placeId?: string; // Add placeId for frontend integration
+  time: string;
+  duration: string;
+  notes: string;
+  placeId?: string;
 }
 
-export enum ActivityType {
-  Eat = "eat",
-  Shop = "shop",
-  Visit = "visit",
-  Exercise = "exercise",
-  Relax = "relax",
-  Explore = "explore",
-  Learn = "learn",
+export interface ActivityWithPlace extends Activity {
+  latitude: number;
+  longitude: number;
+}
+
+export interface ItineraryDay {
+  day: number;
+  activities: Activity[];
+}
+
+export interface GeneratedTrip {
+  title: string;
+  description: string;
+  destination: string;
+  itinerary: ItineraryDay[];
+}
+
+export interface Trip extends GeneratedTrip {
+  id: string;
+  activitiesWithPlaces: ActivityWithPlace[];
 }

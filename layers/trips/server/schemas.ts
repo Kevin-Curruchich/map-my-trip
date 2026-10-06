@@ -1,10 +1,10 @@
 import { z } from "zod";
 
-export const CreateTripExampleSchema = z.object({
-  lang: z.string().default("eng"),
+export const TripExamplesQuerySchema = z.object({
+  lang: z.string().min(2).max(20).default("English"),
 });
 
-export const TripExampleSchemaResponse = z.object({
+export const TripExamplesResponseSchema = z.object({
   ideas: z.array(
     z.object({
       title: z.string(),
@@ -13,35 +13,11 @@ export const TripExampleSchemaResponse = z.object({
   ),
 });
 
-export const CreateTripInputState = z.object({
+export const CreateTripBodySchema = z.object({
   prompt: z
     .string()
+    .trim()
     .min(10)
-    .max(500)
+    .max(1000)
     .describe("The user's prompt for the trip itinerary"),
-});
-
-export const TripPlannerResponse = z.object({
-  title: z.string(),
-  description: z.string(),
-  itinerary: z.array(
-    z.object({
-      day: z.number(),
-      activities: z.array(
-        z.object({
-          id: z.string(),
-          name: z.string(),
-          activityType: z.enum([
-            "eat",
-            "shop",
-            "visit",
-            "exercise",
-            "relax",
-            "explore",
-            "learn",
-          ]),
-        })
-      ),
-    })
-  ),
 });

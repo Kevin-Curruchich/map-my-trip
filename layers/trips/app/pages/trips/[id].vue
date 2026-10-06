@@ -1,173 +1,150 @@
 <script setup lang="ts">
+import type { TimelineItem } from "@nuxt/ui";
+
 const route = useRoute();
-const tripId = route.params.id as string;
+const toast = useToast();
+const { trip } = useTrip(() => String(route.params.id));
+const { createTripAndNavigate } = useTrips();
 
-// Use the new composable
-const { trip } = useTrip(tripId);
-
-// Set page meta
 useSeoMeta({
-  title: computed(() =>
-    trip.value
-      ? `${trip.value.title} - Map My Trip`
-      : "Trip Details - Map My Trip"
-  ),
-  description: computed(
-    () => trip.value?.description || "View your trip itinerary and activities"
-  ),
+  title: () =>
+    trip.value ? `${trip.value.title} - Map My Trip` : "Trip Details - Map My Trip",
+  description: () =>
+    trip.value?.description ?? "View your trip itinerary and activities",
 });
 
-// Transform activities into timeline format
-const timelineItems = (activities: Activity[]) => {
+function toTimelineItems(activities: Activity[]): TimelineItem[] {
   return activities.map((activity) => ({
-    date: activity.id,
+    date: activity.time,
     title: activity.name,
+    description: activity.notes,
     icon: getActivityIcon(activity.activityType),
   }));
-};
+}
 
-// Action handlers
-const shareTrip = () => {
-  if (navigator.share && trip.value) {
-    navigator
-      .share({
-        title: trip.value.title,
-        text: trip.value.description,
-        url: window.location.href,
-      })
-      .catch(() => {
-        // Fallback: copy to clipboard
-        copyToClipboard();
-      });
-  } else {
-    copyToClipboard();
+async function copyLink() {
+  await navigator.clipboard.writeText(window.location.href);
+  toast.add({ title: "Link copied to clipboard", icon: "i-lucide-check" });
+}
+
+async function shareTrip() {
+  if (!trip.value) return;
+
+  if (!navigator.share) {
+    await copyLink();
+    return;
   }
-};
 
-const copyToClipboard = () => {
-  navigator.clipboard.writeText(window.location.href).then(() => {
-    // You could add a toast notification here
-  });
-};
-
-const duplicateTrip = () => {
-  if (trip.value) {
-    const { createTripAndNavigate } = useTrips();
-    // Create a new trip with similar content
-    const prompt = `Create a trip similar to: ${trip.value.title}. ${trip.value.description}`;
-    createTripAndNavigate(prompt);
+  try {
+    await navigator.share({
+      title: trip.value.title,
+      text: trip.value.description,
+      url: window.location.href,
+    });
+  } catch (error) {
+    // The user closing the share sheet is not an error.
+    if ((error as DOMException).name !== "AbortError") await copyLink();
   }
-};
+}
+
+const isDuplicating = ref(false);
+
+async function duplicateTrip() {
+  if (!trip.value) return;
+
+  isDuplicating.value = true;
+  try {
+    await createTripAndNavigate(
+      `Create a trip similar to: ${trip.value.title}. ${trip.value.description}`
+    );
+  } finally {
+    isDuplicating.value = false;
+  }
+}
 </script>
+
 <template>
-  <div class="container mx-auto px-4 py-8">
-    <!-- Loading state -->
-    <div v-if="!trip" class="max-w-4xl mx-auto">
-      <UCard>
-        <div class="animate-pulse">
-          <div class="h-8 bg-gray-200 rounded w-1/2 mb-4" />
-          <div class="h-4 bg-gray-200 rounded w-3/4 mb-6" />
-          <div class="space-y-3">
-            <div class="h-4 bg-gray-200 rounded" />
-            <div class="h-4 bg-gray-200 rounded w-5/6" />
-            <div class="h-4 bg-gray-200 rounded w-4/6" />
+  <div class="container mx-auto max-w-4xl px-4 py-8">
+    <UEmpty
+      v-if="!trip"
+      icon="i-lucide-map"
+      title="Trip not found"
+      description="Trips are kept only for this session. Create a new one to get started."
+      :actions="[{ label: 'Plan a trip', to: '/trips' }]"
+    />
+
+    <template v-else>
+      <UButton
+        to="/trips"
+        variant="ghost"
+        color="neutral"
+        size="sm"
+        icon="i-lucide-arrow-left"
+        class="mb-4"
+      >
+        Back to Trips
+      </UButton>
+
+      <UCard class="mb-8">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h1 class="mb-2 text-2xl font-bold text-highlighted">
+              {{ trip.title }}
+            </h1>
+            <p class="text-muted">{{ trip.description }}</p>
           </div>
+          <UBadge color="primary" variant="soft">
+            {{ trip.itinerary.length }}
+            {{ trip.itinerary.length === 1 ? "Day" : "Days" }}
+          </UBadge>
         </div>
       </UCard>
-    </div>
 
-    <!-- Trip details -->
-    <div v-else class="max-w-4xl mx-auto">
-      <!-- Header -->
-      <div class="mb-8">
-        <UButton
-          to="/trips"
-          variant="ghost"
-          color="neutral"
-          size="sm"
-          class="mb-4"
-        >
-          <UIcon name="i-lucide-arrow-left" />
-          Back to Trips
-        </UButton>
+      <ItineraryPlaces :activities="trip.activitiesWithPlaces" class="mb-8" />
 
-        <UCard>
-          <template #header>
-            <div class="flex items-start justify-between">
-              <div>
-                <h1 class="text-2xl font-bold 900 mb-2">
-                  {{ trip.title }}
-                </h1>
-                <p class="">
-                  {{ trip.description }}
-                </p>
-              </div>
-              <UBadge color="primary" variant="soft">
-                {{ trip.itinerary.length }}
-                {{ trip.itinerary.length === 1 ? "Day" : "Days" }}
-              </UBadge>
-            </div>
-          </template>
-        </UCard>
-      </div>
-
-      <div class="mb-8">
-        <ItineraryPlaces
-          :activities="trip.activitiesWithPlaces"
-          :map-location="{
-            lat: 14.550030465754588,
-            lng: -90.74367141740619,
-          }"
-        />
-      </div>
-
-      <!-- Itinerary Timeline -->
       <UCard>
         <template #header>
-          <div class="flex items-center">
-            <UIcon name="i-lucide-calendar" class="h-5 w-5 text-primary mr-2" />
+          <div class="flex items-center gap-2">
+            <UIcon name="i-lucide-calendar" class="size-5 text-primary" />
             <h2 class="text-lg font-semibold">Itinerary</h2>
           </div>
         </template>
 
         <div class="space-y-8">
-          <div v-for="day in trip.itinerary" :key="day.day" class="relative">
-            <!-- Day header -->
-            <div class="flex items-center mb-4">
+          <section v-for="day in trip.itinerary" :key="day.day">
+            <div class="mb-4 flex items-center gap-3">
               <div
-                class="flex items-center justify-center w-8 h-8 bg-primary text-white rounded-full font-semibold text-sm mr-3"
+                class="flex size-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-inverted"
               >
                 {{ day.day }}
               </div>
-              <h3 class="text-lg font-semibold text-gray-900">
+              <h3 class="text-lg font-semibold text-highlighted">
                 Day {{ day.day }}
               </h3>
             </div>
 
-            <!-- Activities Timeline -->
-            <div class="ml-7 pl-4 border-l-2 border-gray-200 last:border-l-0">
-              <UTimeline
-                :items="timelineItems(day.activities)"
-                size="sm"
-                color="primary"
-              />
-            </div>
-          </div>
+            <UTimeline
+              :items="toTimelineItems(day.activities)"
+              size="sm"
+              color="primary"
+              class="ml-4"
+            />
+          </section>
         </div>
       </UCard>
 
-      <!-- Trip Actions -->
-      <div class="mt-8 flex justify-center space-x-4">
-        <UButton color="primary" variant="solid" @click="shareTrip">
-          <UIcon name="i-lucide-share-2" />
-          Share Trip
-        </UButton>
-
-        <UButton color="neutral" variant="outline" @click="duplicateTrip">
-          <UIcon name="i-lucide-copy" />
+      <div class="mt-8 flex justify-center gap-4">
+        <UButton icon="i-lucide-share-2" @click="shareTrip">Share Trip</UButton>
+        <UButton
+          color="neutral"
+          variant="outline"
+          icon="i-lucide-copy"
+          :loading="isDuplicating"
+          @click="duplicateTrip"
+        >
           Duplicate Trip
         </UButton>
       </div>
-    </div>
+    </template>
   </div>
 </template>

@@ -4,13 +4,13 @@ definePageMeta({
 });
 
 const appConfig = useAppConfig();
-useHead({
+const { loggedIn } = useAuth();
+
+useSeoMeta({
   title: `Login - ${appConfig.title}`,
 });
 
-const { isAuthenticated } = useAuth();
-
-if (isAuthenticated.value) {
+if (loggedIn.value) {
   await navigateTo("/trips", { replace: true });
 }
 
@@ -23,49 +23,26 @@ async function handleGoogleLogin() {
 </script>
 
 <template>
-  <div class="login-container">
-    <UCard class="login-card">
+  <div class="flex min-h-screen items-center justify-center bg-default p-4">
+    <UCard class="w-full max-w-md">
       <template #header>
         <div class="text-center">
           <h1 class="text-2xl font-bold">Welcome to {{ appConfig.title }}</h1>
-          <p class="text-gray-500 mt-2">Sign in to continue to your chats</p>
+          <p class="mt-2 text-muted">Sign in to start planning your trips</p>
         </div>
       </template>
 
-      <div class="login-content">
-        <UButton
-          color="neutral"
-          variant="outline"
-          size="lg"
-          :icon="isLoading ? 'i-heroicons-arrow-path' : 'i-simple-icons-google'"
-          block
-          :loading="isLoading"
-          :disabled="isLoading"
-          @click="handleGoogleLogin"
-        >
-          {{ isLoading ? "Signing you in..." : "Continue with Google" }}
-        </UButton>
-      </div>
+      <UButton
+        color="neutral"
+        variant="outline"
+        size="lg"
+        icon="i-simple-icons-google"
+        block
+        :loading="isLoading"
+        @click="handleGoogleLogin"
+      >
+        {{ isLoading ? "Signing you in..." : "Continue with Google" }}
+      </UButton>
     </UCard>
   </div>
 </template>
-
-<style scoped>
-.login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  padding: 1rem;
-  background: var(--ui-bg-base);
-}
-
-.login-card {
-  width: 100%;
-  max-width: 400px;
-}
-
-.login-content {
-  padding: 1rem 0;
-}
-</style>
