@@ -88,7 +88,12 @@ openssl rand -base64 32 | tr -d '\n' | gcloud secrets create session-password --
 printf '%s' 'YOUR_GOOGLE_OAUTH_CLIENT_SECRET' | gcloud secrets create oauth-google-client-secret --data-file=-
 printf '%s' 'YOUR_OPENAI_API_KEY' | gcloud secrets create openai-api-key --data-file=-
 printf '%s' 'YOUR_GOOGLE_PLACES_API_KEY' | gcloud secrets create google-places-api-key --data-file=-
+printf '%s' 'YOUR_POSTGRES_URL' | gcloud secrets create database-url --data-file=-
 ```
+
+`YOUR_POSTGRES_URL` is a Postgres connection string such as the one Neon gives you
+(`postgresql://user:password@host/db?sslmode=require`). Migrations run automatically when the
+service starts.
 
 To rotate one later: `printf '%s' 'NEW_VALUE' | gcloud secrets versions add openai-api-key --data-file=-`
 and redeploy.

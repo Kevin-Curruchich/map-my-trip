@@ -22,10 +22,11 @@ At its core, MapMyTrip is an intelligent travel planning assistant. It allows us
 
 ## Tech stack
 
-- [Nuxt 4](https://nuxt.com) with [layers](https://nuxt.com/docs/guide/going-further/layers) (`base`, `auth`, `marketing`, `trips`)
+- [Nuxt 4](https://nuxt.com) with [layers](https://nuxt.com/docs/guide/going-further/layers) (`base`, `auth`, `marketing`, `trips`, `events`)
 - [Nuxt UI 4](https://ui.nuxt.com) + Tailwind CSS 4
 - [LangGraph](https://langchain-ai.github.io/langgraphjs/) + OpenAI for trip generation
 - Google Places API (New) and Google Maps JavaScript API
+- Postgres with [Drizzle ORM](https://orm.drizzle.team); migrations live in `layers/events/server/database/migrations` and run on server start (`pnpm db:generate` after changing the schema)
 - [nuxt-auth-utils](https://github.com/atinux/nuxt-auth-utils) for Google OAuth
 - Deployed on Google Cloud Run ([setup guide](docs/deploy-cloud-run.md))
 
@@ -46,6 +47,7 @@ NUXT_OAUTH_GOOGLE_CLIENT_SECRET=
 NUXT_OAUTH_GOOGLE_REDIRECT_URL= # e.g. http://localhost:3000/auth/google
 NUXT_OPENAI_API_KEY=
 NUXT_GOOGLE_PLACES_API_KEY=
+NUXT_DATABASE_URL=             # Postgres, e.g. postgresql://postgres:postgres@localhost:5432/mapmytrip
 NUXT_PUBLIC_GOOGLE_MAPS_API_KEY=
 NUXT_PUBLIC_GOOGLE_MAPS_MAP_ID= # optional
 ```

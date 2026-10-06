@@ -85,3 +85,4 @@ jobs:
             NUXT_OAUTH_GOOGLE_CLIENT_SECRET=oauth-google-client-secret:latest
             NUXT_OPENAI_API_KEY=openai-api-key:latest
             NUXT_GOOGLE_PLACES_API_KEY=google-places-api-key:latest
+            NUXT_DATABASE_URL=database-url:latest

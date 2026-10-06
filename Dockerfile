@@ -17,8 +17,11 @@ RUN pnpm build
 FROM node:${NODE_VERSION}-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production \
-    PORT=8080
+    PORT=8080 \
+    MIGRATIONS_DIR=/app/migrations
 COPY --from=build --chown=node:node /app/.output ./.output
+# Applied on server start by layers/events/server/plugins/migrations.ts.
+COPY --from=build --chown=node:node /app/layers/events/server/database/migrations ./migrations
 USER node
 EXPOSE 8080
 CMD ["node", ".output/server/index.mjs"]
