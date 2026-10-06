@@ -103,8 +103,10 @@ export const votes = appSchema.table(
 );
 
 // Trips generated from /trips, kept so the owner can find them again.
+// Named saved_trips because the shared schema already had an unrelated
+// `trips` table.
 export const trips = appSchema.table(
-  "trips",
+  "saved_trips",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     ownerSub: text("owner_sub").notNull(),
@@ -116,7 +118,7 @@ export const trips = appSchema.table(
       .notNull()
       .defaultNow(),
   },
-  (table) => [index("trips_owner_sub_idx").on(table.ownerSub)]
+  (table) => [index("saved_trips_owner_sub_idx").on(table.ownerSub)]
 );
 
 export type EventRecord = typeof events.$inferSelect;
