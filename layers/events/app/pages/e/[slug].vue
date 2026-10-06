@@ -11,6 +11,11 @@ const slug = route.params.slug as string;
 
 const { data: event, error, refresh } = await useFetch(`/api/events/${slug}`);
 
+const eventSummary = computed(() => {
+  const when = event.value?.date ? `, ${formatEventDate(event.value.date)}` : "";
+  return `Plan en ${event.value?.city}${when}. Únete y di qué quieres hacer y cuánto puedes gastar.`;
+});
+
 if (error.value) {
   throw createError({
     statusCode: error.value.statusCode ?? 404,
@@ -22,10 +27,8 @@ if (error.value) {
 useSeoMeta({
   title: () => event.value?.title,
   ogTitle: () => event.value?.title,
-  description: () =>
-    `Plan en ${event.value?.city}. Únete y di qué quieres hacer y cuánto puedes gastar.`,
-  ogDescription: () =>
-    `Plan en ${event.value?.city}. Únete y di qué quieres hacer y cuánto puedes gastar.`,
+  description: () => eventSummary.value,
+  ogDescription: () => eventSummary.value,
 });
 
 const { getParticipantId, markJoined } = useJoinedEvents();
@@ -98,9 +101,20 @@ async function copyLink() {
   <UContainer v-if="event" class="max-w-xl py-10 space-y-8">
     <section>
       <h1 class="text-2xl font-bold">{{ event.title }}</h1>
-      <p class="text-muted">
-        {{ event.city }}<span v-if="event.date"> · {{ event.date }}</span>
-      </p>
+      <div class="text-muted flex flex-col gap-1 mt-1">
+        <ULink
+          :to="eventMapUrl(event)"
+          target="_blank"
+          class="inline-flex items-center gap-1"
+        >
+          <UIcon name="i-lucide-map-pin" />
+          {{ event.city }}
+        </ULink>
+        <span v-if="event.date" class="inline-flex items-center gap-1">
+          <UIcon name="i-lucide-calendar" />
+          {{ formatEventDate(event.date) }}
+        </span>
+      </div>
       <p v-if="event.description" class="mt-2">{{ event.description }}</p>
 
       <div class="flex flex-wrap gap-2 mt-4">

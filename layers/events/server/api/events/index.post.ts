@@ -12,8 +12,11 @@ export default defineEventHandler(async (event) => {
     .values({
       slug: createSlug(),
       title: body.title,
-      city: body.city,
-      date: body.date || null,
+      city: body.location.label,
+      placeId: body.location.placeId ?? null,
+      latitude: body.location.latitude ?? null,
+      longitude: body.location.longitude ?? null,
+      date: body.date ?? null,
       description: body.description || null,
     })
     .returning({ slug: tables.events.slug });
