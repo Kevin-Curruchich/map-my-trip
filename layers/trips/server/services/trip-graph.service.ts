@@ -10,10 +10,12 @@ const ActivitySchema = z.object({
   time: z.string().describe('Start time, e.g. "9:00 AM"'),
   duration: z.string().describe('Duration, e.g. "2 hours"'),
   notes: z.string().describe("Tips or what to expect"),
+  // Nullable, not optional: OpenAI's strict structured output requires every
+  // property to be listed as required.
   placeId: z
     .string()
-    .optional()
-    .describe("Google Place ID from the available places, if applicable"),
+    .nullable()
+    .describe("Google Place ID from the available places, or null"),
 });
 
 const TripState = new StateSchema({
@@ -29,7 +31,9 @@ const TripState = new StateSchema({
     .array(
       z.object({
         day: z.number(),
-        activities: z.array(ActivitySchema.extend({ id: z.number() })),
+        activities: z.array(
+          ActivitySchema.extend({ id: z.number(), placeId: z.string().optional() })
+        ),
       })
     )
     .optional(),
@@ -119,8 +123,9 @@ async function generateItinerary(state: State) {
   return {
     itinerary: itinerary.map((day) => ({
       day: day.day,
-      activities: day.activities.map((activity, index) => ({
+      activities: day.activities.map(({ placeId, ...activity }, index) => ({
         ...activity,
+        ...(placeId ? { placeId } : {}),
         id: index + 1,
       })),
     })),
