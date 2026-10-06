@@ -2,10 +2,12 @@ import {
   date,
   doublePrecision,
   index,
+  integer,
   jsonb,
   pgSchema,
   text,
   timestamp,
+  unique,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -29,6 +31,14 @@ export const events = appSchema.table("events", {
   description: text("description"),
   // Google account (`sub`) of the creator when they were signed in.
   ownerSub: text("owner_sub"),
+  // Secret kept in the creator's browser; lets them run the vote without an
+  // account. Null for events created before voting existed.
+  ownerToken: text("owner_token"),
+  // open: people are joining. voting: proposals are up. closed: winner picked.
+  status: text("status", { enum: ["open", "voting", "closed"] })
+    .notNull()
+    .default("open"),
+  winningProposalId: uuid("winning_proposal_id"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -51,6 +61,47 @@ export const participants = appSchema.table(
   (table) => [index("participants_event_id_idx").on(table.eventId)]
 );
 
+// The plans the AI proposes for an event; the group votes on them.
+export const proposals = appSchema.table(
+  "proposals",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    budget: text("budget", { enum: ["low", "medium", "high"] }).notNull(),
+    steps: jsonb("steps").$type<string[]>().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("proposals_event_id_idx").on(table.eventId)]
+);
+
+// One vote per participant and event; voting again changes it.
+export const votes = appSchema.table(
+  "votes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    proposalId: uuid("proposal_id")
+      .notNull()
+      .references(() => proposals.id, { onDelete: "cascade" }),
+    participantId: uuid("participant_id")
+      .notNull()
+      .references(() => participants.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [unique("votes_event_participant_unique").on(table.eventId, table.participantId)]
+);
+
 // Trips generated from /trips, kept so the owner can find them again.
 export const trips = appSchema.table(
   "trips",
@@ -70,3 +121,4 @@ export const trips = appSchema.table(
 
 export type EventRecord = typeof events.$inferSelect;
 export type ParticipantRecord = typeof participants.$inferSelect;
+export type ProposalRecord = typeof proposals.$inferSelect;

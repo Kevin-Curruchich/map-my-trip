@@ -13,6 +13,12 @@ const { data, status } = await useFetch("/api/me/plans", {
   query: computed(() => ({ slugs: listJoinedSlugs().slice(0, 50).join(",") })),
 });
 
+const eventStatusLabels = {
+  open: "Sumando gente",
+  voting: "Votando",
+  closed: "Plan decidido",
+} as const;
+
 const dateFormatter = new Intl.DateTimeFormat("es", {
   day: "numeric",
   month: "short",
@@ -49,9 +55,12 @@ const dateFormatter = new Intl.DateTimeFormat("es", {
                   }}<span v-if="event.date"> · {{ formatEventDate(event.date) }}</span>
                 </p>
               </div>
-              <UBadge variant="subtle" :color="event.isOwner ? 'primary' : 'neutral'">
-                {{ event.isOwner ? "Creado por ti" : "Te uniste" }}
-              </UBadge>
+              <div class="flex shrink-0 flex-col items-end gap-1">
+                <UBadge variant="subtle" :color="event.isOwner ? 'primary' : 'neutral'">
+                  {{ event.isOwner ? "Creado por ti" : "Te uniste" }}
+                </UBadge>
+                <span class="text-xs text-dimmed">{{ eventStatusLabels[event.status] }}</span>
+              </div>
             </ULink>
           </li>
         </ul>

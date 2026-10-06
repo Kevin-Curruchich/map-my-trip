@@ -10,12 +10,15 @@ export default defineEventHandler(async (event) => {
 
   const db = useDb();
   const found = await db.query.events.findFirst({
-    columns: { id: true },
+    columns: { id: true, status: true },
     where: eq(tables.events.slug, slug),
   });
 
   if (!found) {
     throw createError({ statusCode: 404, statusMessage: "Event not found" });
+  }
+  if (found.status === "closed") {
+    throw createError({ statusCode: 409, statusMessage: "Event is closed" });
   }
 
   const [participant] = await db

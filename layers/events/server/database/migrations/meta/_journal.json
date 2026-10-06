@@ -15,6 +15,13 @@
       "when": 1791319785829,
       "tag": "0001_owners_and_trips",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791320412901,
+      "tag": "0002_voting",
+      "breakpoints": true
     }
   ]
 }
