@@ -20,78 +20,44 @@ At its core, MapMyTrip is an intelligent travel planning assistant. It allows us
 - Reduces Stress: The clarity and organization provided by the application decrease the anxiety associated with planning complex trips, allowing travelers to enjoy the process more.
 - Flexibility: Allows for quick and easy adjustments to the itinerary on the fly, ideal for adapting to unforeseen circumstances or changes in plans.
 
-# Nuxt Minimal Starter
+## Tech stack
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+- [Nuxt 4](https://nuxt.com) with [layers](https://nuxt.com/docs/guide/going-further/layers) (`base`, `auth`, `marketing`, `trips`)
+- [Nuxt UI 4](https://ui.nuxt.com) + Tailwind CSS 4
+- [LangGraph](https://langchain-ai.github.io/langgraphjs/) + OpenAI for trip generation
+- Google Places API (New) and Google Maps JavaScript API
+- [nuxt-auth-utils](https://github.com/atinux/nuxt-auth-utils) for Google OAuth
+- Deployed on AWS Amplify Hosting
 
 ## Setup
 
-Make sure to install dependencies:
+Requires Node.js 24 (see `.nvmrc`) and pnpm.
 
 ```bash
-# npm
-npm install
-
-# pnpm
 pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
 ```
 
-## Development Server
-
-Start the development server on `http://localhost:3000`:
+Create a `.env.dev` file with:
 
 ```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
+NUXT_SESSION_PASSWORD=          # at least 32 characters
+NUXT_OAUTH_GOOGLE_CLIENT_ID=
+NUXT_OAUTH_GOOGLE_CLIENT_SECRET=
+NUXT_OAUTH_GOOGLE_REDIRECT_URL= # e.g. http://localhost:3000/auth/google
+NUXT_OPENAI_API_KEY=
+NUXT_GOOGLE_PLACES_API_KEY=
+NUXT_PUBLIC_GOOGLE_MAPS_API_KEY=
+NUXT_PUBLIC_GOOGLE_MAPS_MAP_ID= # optional
 ```
 
-## Production
+> Amplify Hosting does not expose environment variables to the SSR runtime, so they are read at build time in each layer's `nuxt.config.ts`.
 
-Build the application for production:
+## Scripts
 
 ```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
+pnpm dev        # development server on http://localhost:3000
+pnpm build      # production build (aws-amplify preset)
+pnpm preview    # preview the production build
+pnpm lint       # eslint --fix
+pnpm typecheck  # vue-tsc via nuxt typecheck
 ```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.

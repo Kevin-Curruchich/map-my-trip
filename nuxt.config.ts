@@ -1,14 +1,10 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+// Layers under ./layers are auto-registered; shared settings live here only.
 export default defineNuxtConfig({
-  compatibilityDate: "2025-07-15",
+  compatibilityDate: "2026-10-01",
   devtools: { enabled: true },
-  modules: ["@nuxt/eslint", "@nuxt/image", "@nuxt/test-utils"],
+  modules: ["@nuxt/eslint"],
   nitro: {
     preset: "aws-amplify",
-  },
-  vite: {
-    optimizeDeps: {
-      include: ["debug"],
-    },
   },
 });

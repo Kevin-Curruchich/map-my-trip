@@ -1,8 +1,7 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  compatibilityDate: "2025-07-15",
-  devtools: { enabled: true },
   modules: ["nuxt-auth-utils"],
+  // Amplify Hosting does not expose env vars to the SSR runtime, so they are
+  // read at build time here instead of relying on NUXT_* runtime overrides.
   runtimeConfig: {
     oauth: {
       google: {
@@ -12,10 +11,7 @@ export default defineNuxtConfig({
       },
     },
     session: {
-      password: process.env.NUXT_SESSION_PASSWORD,
+      password: process.env.NUXT_SESSION_PASSWORD || "",
     },
-  },
-  nitro: {
-    preset: "aws-amplify",
   },
 });
