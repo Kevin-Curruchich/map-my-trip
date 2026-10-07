@@ -265,9 +265,7 @@ async function copyLink() {
         <h2 class="text-xl font-bold">{{ winner.title }}</h2>
       </template>
       <p>{{ winner.description }}</p>
-      <ol class="mt-3 list-decimal space-y-1 pl-5">
-        <li v-for="step in winner.steps" :key="step">{{ step }}</li>
-      </ol>
+      <ProposalSteps :steps="winner.steps" class="mt-4" />
       <template #footer>
         <p class="text-sm text-muted">
           {{ voteLabel(winner.votes) }} de {{ totalVotes }} ·
@@ -300,9 +298,7 @@ async function copyLink() {
           </UBadge>
         </div>
         <p class="mt-1 text-sm">{{ proposal.description }}</p>
-        <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted">
-          <li v-for="step in proposal.steps" :key="step">{{ step }}</li>
-        </ol>
+        <ProposalSteps :steps="proposal.steps" class="mt-3" />
 
         <div class="mt-4 flex items-center justify-between gap-3">
           <span class="text-sm text-muted">{{ voteLabel(proposal.votes) }}</span>

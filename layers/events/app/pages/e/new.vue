@@ -23,49 +23,54 @@ const errors = reactive({ title: "", location: "" });
 const isLoading = ref(false);
 const toast = useToast();
 
-const { suggestions, isSearching, isLocating, search, locate } =
+const { suggestions, isSearching, isLocating, search, resolve, locate } =
   useEventLocation();
 const { saveOwnerToken } = useEventOwner();
 
 interface LocationItem {
   label: string;
   description: string;
-  location: EventLocation;
+  suggestion?: (typeof suggestions.value)[number];
 }
 
 const locationItems = computed<LocationItem[]>(() =>
-  suggestions.value.map((place) => ({
-    label: place.name,
-    description: place.address,
-    location: {
-      label: place.address ? `${place.name}, ${place.address}` : place.name,
-      placeId: place.placeId,
-      latitude: place.latitude,
-      longitude: place.longitude,
-    },
+  suggestions.value.map((suggestion) => ({
+    label: suggestion.name,
+    description: suggestion.address,
+    suggestion,
   }))
 );
 
+// Coordinates arrive a moment after a suggestion is picked; submit waits.
+let resolving: Promise<void> | undefined;
+
 const selectedLocationItem = computed<LocationItem | undefined>({
   get: () =>
-    location.value
-      ? {
-          label: location.value.label,
-          description: "",
-          location: location.value,
-        }
-      : undefined,
+    location.value ? { label: location.value.label, description: "" } : undefined,
   set: (item) => {
     pickedLabel = item?.label;
-    location.value = item?.location;
     errors.location = "";
+    if (!item?.suggestion) {
+      location.value = undefined;
+      return;
+    }
+    const picked = item.suggestion;
+    location.value = { label: picked.name, placeId: picked.placeId };
+    resolving = resolve(picked).then((resolved) => {
+      // Only if the user didn't pick something else meanwhile.
+      if (location.value?.placeId === picked.placeId) location.value = resolved;
+    });
   },
 });
 
 // The menu writes the picked item's label into the search box, so any other
 // text there means the user typed a place without picking a suggestion.
 let pickedLabel: string | undefined;
-watch(locationSearch, (query) => search(query));
+watch(locationSearch, (query) => {
+  // Picking writes the label into the box; that isn't a new search.
+  if (query === pickedLabel || query === location.value?.label) return;
+  search(query);
+});
 watch(title, () => (errors.title = ""));
 
 async function useMyLocation() {
@@ -92,7 +97,8 @@ function validate() {
   // A typed place that wasn't picked from the list is still accepted as text.
   const typed = locationSearch.value.trim();
   const isPicked =
-    !!location.value && (typed === pickedLabel || typed === location.value.label);
+    !!location.value &&
+    (typed === pickedLabel || typed === location.value.label);
   if (!isPicked && typed.length >= 2) location.value = { label: typed };
   errors.location = location.value ? "" : "¿Dónde será el plan?";
   return !errors.title && !errors.location;
@@ -103,6 +109,7 @@ async function onSubmit() {
 
   isLoading.value = true;
   try {
+    await resolving;
     const { slug, ownerToken } = await $fetch("/api/events", {
       method: "POST",
       body: {

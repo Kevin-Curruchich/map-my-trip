@@ -48,6 +48,7 @@ NUXT_OAUTH_GOOGLE_REDIRECT_URL= # e.g. http://localhost:3000/auth/google
 NUXT_OPENAI_API_KEY=
 NUXT_GOOGLE_PLACES_API_KEY=
 NUXT_DATABASE_URL=             # Postgres, e.g. postgresql://postgres:postgres@localhost:5432/mapmytrip
+NUXT_ADMIN_EMAILS=              # who can manage /admin/lugares, comma separated
 NUXT_PUBLIC_GOOGLE_MAPS_API_KEY=
 NUXT_PUBLIC_GOOGLE_MAPS_MAP_ID= # optional
 ```
