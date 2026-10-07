@@ -1,4 +1,5 @@
 import {
+  boolean,
   date,
   doublePrecision,
   index,
@@ -10,6 +11,12 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
+
+import { eventBudgetValues } from "../../shared/constants/event-options.constant";
+import {
+  partnerStatusValues,
+  placeCategoryValues,
+} from "../../shared/constants/place-options.constant";
 
 // All app tables live in this schema of the shared Supabase database,
 // not in `public`.
@@ -73,12 +80,51 @@ export const proposals = appSchema.table(
     title: text("title").notNull(),
     description: text("description").notNull(),
     budget: text("budget", { enum: ["low", "medium", "high"] }).notNull(),
-    steps: jsonb("steps").$type<string[]>().notNull(),
+    steps: jsonb("steps").$type<StoredProposalStep[]>().notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
   (table) => [index("proposals_event_id_idx").on(table.eventId)]
+);
+
+// Places we recommend ourselves, often new spots that Google Places doesn't
+// list yet. They are offered to the AI next to Google results, and partners
+// (businesses we have an agreement with) are preferred and labeled.
+export const recommendedPlaces = appSchema.table(
+  "recommended_places",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    // Shown to people and given to the AI: what makes the place worth it.
+    description: text("description"),
+    category: text("category", { enum: placeCategoryValues }).notNull(),
+    tags: text("tags").array().notNull().default([]),
+    priceLevel: text("price_level", { enum: eventBudgetValues }),
+    address: text("address"),
+    latitude: doublePrecision("latitude").notNull(),
+    longitude: doublePrecision("longitude").notNull(),
+    // Set when the place is also on Google, to link to its Maps page.
+    googlePlaceId: text("google_place_id"),
+    instagram: text("instagram"),
+    whatsapp: text("whatsapp"),
+    website: text("website"),
+    partnerStatus: text("partner_status", { enum: partnerStatusValues })
+      .notNull()
+      .default("prospect"),
+    active: boolean("active").notNull().default(true),
+    // Internal only, never sent to the browser outside /admin.
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("recommended_places_location_idx").on(table.latitude, table.longitude),
+  ]
 );
 
 // One vote per participant and event; voting again changes it.
@@ -124,3 +170,4 @@ export const trips = appSchema.table(
 export type EventRecord = typeof events.$inferSelect;
 export type ParticipantRecord = typeof participants.$inferSelect;
 export type ProposalRecord = typeof proposals.$inferSelect;
+export type RecommendedPlaceRecord = typeof recommendedPlaces.$inferSelect;

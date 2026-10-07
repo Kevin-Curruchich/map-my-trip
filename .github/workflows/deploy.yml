@@ -80,6 +80,7 @@ jobs:
             NUXT_OAUTH_GOOGLE_CLIENT_ID=${{ vars.OAUTH_GOOGLE_CLIENT_ID }}
             NUXT_OAUTH_GOOGLE_REDIRECT_URL=${{ vars.OAUTH_GOOGLE_REDIRECT_URL }}
             NUXT_PUBLIC_GOOGLE_MAPS_API_KEY=${{ vars.GOOGLE_MAPS_API_KEY }}
+            NUXT_ADMIN_EMAILS=${{ vars.ADMIN_EMAILS }}
           secrets: |-
             NUXT_SESSION_PASSWORD=session-password:latest
             NUXT_OAUTH_GOOGLE_CLIENT_SECRET=oauth-google-client-secret:latest
