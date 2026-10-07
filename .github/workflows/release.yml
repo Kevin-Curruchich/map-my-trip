@@ -1,0 +1,27 @@
+name: Release
+
+# Keeps a release PR up to date with the next version and its changelog,
+# built from Conventional Commits. Merging that PR tags the version and
+# publishes the GitHub release. While in beta, versions stay below 1.0.0.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v5
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

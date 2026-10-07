@@ -64,3 +64,12 @@ pnpm preview    # preview the production build
 pnpm lint       # eslint --fix
 pnpm typecheck  # vue-tsc via nuxt typecheck
 ```
+
+## Releases
+
+Versions are managed by [release-please](https://github.com/googleapis/release-please) from [Conventional Commits](https://www.conventionalcommits.org) (`feat:`, `fix:`, `refactor:`…).
+
+- Every push to `main` updates a **release PR** with the next version and its `CHANGELOG.md` entry.
+- Merging that PR tags the version (`v0.x.y`) and publishes the GitHub release.
+- While in beta the project stays below `1.0.0`: `feat` bumps the minor, `fix` the patch, and even breaking changes only bump the minor. Releases are marked as pre-releases.
+- Deploys still happen on every push to `main`; releases mark the milestones.
