@@ -46,6 +46,8 @@ useSeoMeta({
   ogDescription: () => eventSummary.value,
 });
 
+defineOgImage("Event", { slug });
+
 // Keeps joins and votes from the rest of the group showing up live.
 let pollTimer: ReturnType<typeof setInterval> | undefined;
 onMounted(() => {
@@ -171,18 +173,37 @@ function budgetLabel(value: string) {
   return eventBudgetOptions.find((option) => option.value === value)?.label;
 }
 
-const shareUrl = computed(() =>
-  import.meta.client ? window.location.href : ""
+const requestOrigin = useRequestURL().origin;
+// Same value on the server and in the browser, so the rendered wa.me link
+// already carries it (behind Cloud Run the origin comes from x-forwarded-*).
+const shareUrl = computed(() => `${requestOrigin}/e/${slug}`);
+// No emoji: WhatsApp on iOS can turn emoji passed through wa.me into "�".
+const shareText = computed(() =>
+  event.value?.status === "voting"
+    ? `${event.value?.title}: ya hay planes, entra a votar`
+    : event.value?.status === "closed" && winner.value
+      ? `${event.value?.title}: ganó ${winner.value.title}`
+      : `${event.value?.title}: únete y di qué quieres hacer`
 );
-const whatsappUrl = computed(() => {
-  const text =
-    event.value?.status === "voting"
-      ? `${event.value?.title}: ya hay planes, entra a votar 👉 ${shareUrl.value}`
-      : event.value?.status === "closed" && winner.value
-        ? `${event.value?.title}: ganó ${winner.value.title} 👉 ${shareUrl.value}`
-        : `${event.value?.title}: únete y di qué quieres hacer 👉 ${shareUrl.value}`;
-  return `https://wa.me/?text=${encodeURIComponent(text)}`;
-});
+const whatsappUrl = computed(
+  () =>
+    `https://wa.me/?text=${encodeURIComponent(`${shareText.value} ${shareUrl.value}`)}`
+);
+
+// On phones the native share sheet passes the text untouched and lets people
+// pick the WhatsApp group directly; desktops keep the wa.me link.
+async function shareOnWhatsApp(clickEvent: MouseEvent) {
+  if (!navigator.share || !matchMedia("(pointer: coarse)").matches) return;
+
+  clickEvent.preventDefault();
+  try {
+    await navigator.share({ text: shareText.value, url: shareUrl.value });
+  } catch (shareError) {
+    if ((shareError as DOMException).name !== "AbortError") {
+      window.open(whatsappUrl.value, "_blank");
+    }
+  }
+}
 
 async function copyLink() {
   try {
@@ -220,6 +241,7 @@ async function copyLink() {
           target="_blank"
           icon="i-simple-icons-whatsapp"
           color="success"
+          @click="shareOnWhatsApp"
         >
           Compartir en WhatsApp
         </UButton>
