@@ -113,7 +113,7 @@ In **Settings → Environments**, create an environment named `production` and a
 | `OAUTH_GOOGLE_CLIENT_ID` | Google OAuth client ID |
 | `OAUTH_GOOGLE_REDIRECT_URL` | `https://<your-domain>/auth/google` |
 | `GOOGLE_MAPS_API_KEY` | browser Maps key (restrict it by HTTP referrer) |
-| `ADMIN_EMAILS` | Google accounts that can manage `/admin/lugares`, comma separated |
+| `ADMIN_EMAILS` | Google accounts that can manage `/admin/places`, comma separated |
 
 ### 7. First deploy
 
