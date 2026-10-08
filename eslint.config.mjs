@@ -2,5 +2,6 @@
 import withNuxt from './.nuxt/eslint.config.mjs'
 
 export default withNuxt(
-  // Your custom configs here
+  // Agent skills are third-party code installed with `npx skills add`.
+  { ignores: ['.agents/**', '.claude/**'] },
 )
