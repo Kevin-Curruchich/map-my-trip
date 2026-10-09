@@ -3,22 +3,19 @@ definePageMeta({
   layout: false,
 });
 
-const appConfig = useAppConfig();
+const route = useRoute();
 const { loggedIn } = useAuth();
+const { signInWithGoogle, isRedirecting } = useGoogleLogin();
 
 useSeoMeta({
-  title: `Login - ${appConfig.title}`,
+  title: "Entrar · MapMyTrip",
+  robots: "noindex",
 });
 
+const redirectTo = safeRedirect(route.query.redirect);
+
 if (loggedIn.value) {
-  await navigateTo("/trips", { replace: true });
-}
-
-const isLoading = ref(false);
-
-async function handleGoogleLogin() {
-  isLoading.value = true;
-  await navigateTo("/auth/google", { external: true });
+  await navigateTo(redirectTo, { replace: true });
 }
 </script>
 
@@ -26,9 +23,16 @@ async function handleGoogleLogin() {
   <div class="flex min-h-screen items-center justify-center bg-default p-4">
     <UCard class="w-full max-w-md">
       <template #header>
-        <div class="text-center">
-          <h1 class="text-2xl font-bold">Welcome to {{ appConfig.title }}</h1>
-          <p class="mt-2 text-muted">Sign in to start planning your trips</p>
+        <div class="flex flex-col items-center text-center">
+          <NuxtLink to="/" aria-label="MapMyTrip, inicio">
+            <AppLogo :size="40" />
+          </NuxtLink>
+          <h1 class="mt-6 text-2xl font-extrabold tracking-tight text-highlighted">
+            Entra para continuar
+          </h1>
+          <p class="mt-2 text-muted">
+            Entra para usar la IA y guardar tus planes.
+          </p>
         </div>
       </template>
 
@@ -38,11 +42,15 @@ async function handleGoogleLogin() {
         size="lg"
         icon="i-simple-icons-google"
         block
-        :loading="isLoading"
-        @click="handleGoogleLogin"
+        :loading="isRedirecting"
+        @click="signInWithGoogle(redirectTo)"
       >
-        {{ isLoading ? "Signing you in..." : "Continue with Google" }}
+        {{ isRedirecting ? "Conectando con Google…" : "Continuar con Google" }}
       </UButton>
+
+      <p class="mt-4 text-center text-xs text-dimmed">
+        Tus amigos no necesitan cuenta para unirse a un plan y votar.
+      </p>
     </UCard>
   </div>
 </template>

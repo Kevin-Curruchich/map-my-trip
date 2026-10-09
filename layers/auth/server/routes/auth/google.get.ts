@@ -21,10 +21,13 @@ export default defineOAuthGoogleEventHandler({
       loggedInAt: new Date(),
     });
 
-    return sendRedirect(event, "/plans");
+    const redirectTo = safeRedirect(getCookie(event, AUTH_REDIRECT_COOKIE));
+    deleteCookie(event, AUTH_REDIRECT_COOKIE, { path: "/" });
+    return sendRedirect(event, redirectTo);
   },
   onError(event, error) {
     console.error("Google OAuth error:", error);
+    deleteCookie(event, AUTH_REDIRECT_COOKIE, { path: "/" });
     return sendRedirect(event, "/login");
   },
 });
