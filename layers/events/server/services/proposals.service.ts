@@ -82,6 +82,14 @@ export interface GeneratedProposal {
 
 type Center = { latitude: number; longitude: number };
 
+// A place the AI may pick for a step, with its hours from Google when known.
+type Candidate = { place: StepPlace; hours: OpeningHours | null };
+
+// 0 = Sunday, as Google counts. Noon UTC keeps the date on the same day.
+function weekdayOf(date: string | null) {
+  return date ? new Date(`${date}T12:00:00Z`).getUTCDay() : null;
+}
+
 // Where to look for places, saving the coordinates of a typed place so it is
 // geocoded only once.
 async function resolveCenter(
@@ -112,12 +120,14 @@ async function resolveCenter(
   return { center, radius: RADIUS_AREA };
 }
 
-// Recommended places first (partners on top), then Google, without repeats.
+// Recommended places first (partners on top), then Google, without repeats
+// and without places closed on the day of the event.
 async function findCandidates(
   step: { search: string; category: (typeof placeCategoryValues)[number] },
   center: Center,
-  radius: number
-): Promise<StepPlace[]> {
+  radius: number,
+  weekday: number | null
+): Promise<Candidate[]> {
   const [recommended, google] = await Promise.all([
     findRecommendedNear(step.category, center, radius).catch((error) => {
       console.error("Recommended places lookup failed:", error);
@@ -131,14 +141,28 @@ async function findCandidates(
 
   const alsoOnGoogle = new Set(recommended.map((place) => place.googlePlaceId));
   return [
-    ...recommended.map(toStepPlace),
-    ...google.filter((place) => !alsoOnGoogle.has(place.id)),
+    ...recommended.map((place) => ({ place: toStepPlace(place), hours: null })),
+    ...google.filter(
+      ({ place, hours }) =>
+        !alsoOnGoogle.has(place.id) &&
+        !(hours && weekday !== null && hoursOn(hours, weekday) === "cerrado")
+    ),
   ].slice(0, CANDIDATES_PER_STEP);
 }
 
-function describeCandidate(code: string, place: StepPlace) {
+function describeCandidate(
+  code: string,
+  { place, hours }: Candidate,
+  center: Center,
+  weekday: number | null
+) {
+  const todayHours = hours && weekday !== null ? hoursOn(hours, weekday) : null;
   const details = [
     place.partner ? "ALIADO" : place.source === "recommended" ? "RECOMENDADO" : null,
+    place.latitude !== null && place.longitude !== null
+      ? `a ${formatDistance(distanceInMeters(center, { latitude: place.latitude, longitude: place.longitude }))}`
+      : null,
+    todayHours ? `horario ese día: ${todayHours}` : null,
     place.rating ? `${place.rating}★ (${place.ratingCount ?? 0} reseñas)` : null,
     place.priceLevel ? `precio ${budgetLabels[place.priceLevel]}` : null,
     place.description,
@@ -167,7 +191,7 @@ export async function generateProposals(
 
   const context = `Evento: ${event.title}
 Zona: ${event.city}
-${event.date ? `Fecha: ${event.date}` : "Fecha: sin definir"}
+${event.date ? `Fecha: ${formatEventDate(event.date)}` : "Fecha: sin definir"}
 ${event.description ? `Detalles: ${event.description}` : ""}
 
 Personas y lo que dijeron:
@@ -199,14 +223,18 @@ Reglas:
   }
 
   // 2. Real candidates for every step, one lookup per distinct search.
-  const lookups = new Map<string, Promise<StepPlace[]>>();
+  const weekday = weekdayOf(event.date);
+  const lookups = new Map<string, Promise<Candidate[]>>();
   const candidates = await Promise.all(
     drafts.map((draft) =>
       Promise.all(
         draft.steps.map((step) => {
           const key = `${step.category}:${step.search.toLowerCase()}`;
           if (!lookups.has(key)) {
-            lookups.set(key, findCandidates(step, location.center, location.radius));
+            lookups.set(
+              key,
+              findCandidates(step, location.center, location.radius, weekday)
+            );
           }
           return lookups.get(key)!;
         })
@@ -215,15 +243,15 @@ Reglas:
   );
 
   // 3. The AI picks among them, by short codes it can't misspell.
-  const codes = new Map<string, StepPlace>();
+  const codes = new Map<string, Candidate>();
   const listing = drafts
     .map((draft, planIndex) => {
       const steps = draft.steps
         .map((step, stepIndex) => {
-          const options = candidates[planIndex]![stepIndex]!.map((place, index) => {
+          const options = candidates[planIndex]![stepIndex]!.map((candidate, index) => {
             const code = `p${planIndex + 1}s${stepIndex + 1}c${index + 1}`;
-            codes.set(code, place);
-            return describeCandidate(code, place);
+            codes.set(code, candidate);
+            return describeCandidate(code, candidate, location.center, weekday);
           });
           return `  Paso ${stepIndex + 1}: ${step.title}\n${options.join("\n") || "    (sin lugares encontrados)"}`;
         })
@@ -239,7 +267,8 @@ Ayudas a un grupo de amigos a decidir qué hacer juntos.
 
 ${context}
 
-Estos son 3 planes con lugares reales cerca para cada paso:
+Estos son 3 planes con lugares reales cerca para cada paso. Cada lugar dice a
+qué distancia está del punto del evento y, si se sabe, su horario ese día:
 
 ${listing}
 
@@ -248,7 +277,9 @@ Para cada plan, en el mismo orden y con los mismos pasos:
 - Respeta el presupuesto del plan y lo que pidió el grupo.
 - Prefiere los lugares RECOMENDADO y ALIADO cuando encajen con el grupo; si no
   encajan, elige otro. Entre los demás, prefiere los mejor calificados.
-- No repitas un mismo lugar dentro de un plan y procura que estén cerca entre sí.
+- No repitas un mismo lugar dentro de un plan. Prefiere lugares cercanos al punto
+  del evento, para que los pasos queden cerca entre sí.
+- Elige lugares abiertos a la hora en que tendría sentido ese paso.
 - Reescribe la descripción mencionando los lugares elegidos. En español.
 `);
 
@@ -260,10 +291,12 @@ Para cada plan, en el mismo orden y con los mismos pasos:
       budget: picked?.budget ?? draft.budget,
       steps: draft.steps.map((step, stepIndex) => {
         const choice = picked?.steps[stepIndex];
-        const place = choice?.candidate ? codes.get(choice.candidate) : undefined;
+        const candidate = choice?.candidate ? codes.get(choice.candidate) : undefined;
         // Only codes from this step count; anything else means no place.
         const valid =
-          place && candidates[planIndex]![stepIndex]!.includes(place) ? place : null;
+          candidate && candidates[planIndex]![stepIndex]!.includes(candidate)
+            ? candidate.place
+            : null;
         return { title: choice?.title || step.title, place: valid };
       }),
     };

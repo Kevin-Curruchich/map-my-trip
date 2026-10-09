@@ -12,10 +12,10 @@ const ActivitySchema = z.object({
   notes: z.string().describe("Tips or what to expect"),
   // Nullable, not optional: OpenAI's strict structured output requires every
   // property to be listed as required.
-  placeId: z
+  place: z
     .string()
     .nullable()
-    .describe("Google Place ID from the available places, or null"),
+    .describe('Code of the place from the available places, e.g. "L3", or null'),
 });
 
 const TripState = new StateSchema({
@@ -25,14 +25,24 @@ const TripState = new StateSchema({
   destination: z.string().optional(),
   tags: z.array(z.string()).optional(),
   places: z.array(
-    z.object({ id: z.string(), name: z.string(), address: z.string() })
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      address: z.string(),
+      latitude: z.number().nullable(),
+      longitude: z.number().nullable(),
+      distance: z.number().nullable(),
+    })
   ).optional(),
   itinerary: z
     .array(
       z.object({
         day: z.number(),
         activities: z.array(
-          ActivitySchema.extend({ id: z.number(), placeId: z.string().optional() })
+          ActivitySchema.omit({ place: true }).extend({
+            id: z.number(),
+            placeId: z.string().optional(),
+          })
         ),
       })
     )
@@ -97,7 +107,26 @@ async function findPlaces(state: State) {
   return { places };
 }
 
+// One line per place, with a short code the model can't misspell, its
+// distance from the destination and its coordinates to group nearby places.
+function describePlaces(places: TripPlace[]) {
+  return places
+    .map((place, index) => {
+      const details = [
+        place.address,
+        place.distance !== null ? `${formatDistance(place.distance)} from the destination` : null,
+        place.latitude !== null && place.longitude !== null
+          ? `(${place.latitude.toFixed(3)}, ${place.longitude.toFixed(3)})`
+          : null,
+      ].filter(Boolean);
+      return `L${index + 1}: ${place.name} — ${details.join(" · ")}`;
+    })
+    .join("\n");
+}
+
 async function generateItinerary(state: State) {
+  const places = state.places ?? [];
+  const codes = new Map(places.map((place, index) => [`L${index + 1}`, place.id]));
   const { itinerary } = await useChatModel()
     .withStructuredOutput(
       z.object({
@@ -113,28 +142,29 @@ async function generateItinerary(state: State) {
       `Create a detailed itinerary for "${state.prompt}" in ${state.destination}.
   Cover the number of days requested in the trip idea (1 day if none is specified).
 
-  Available places to include:
-  ${JSON.stringify(state.places)}
+  Available places to include, with their distance from the destination and
+  their coordinates:
+${describePlaces(places)}
 
   Requirements:
   - Balance different activity types (eating, sightseeing, relaxation, etc.)
   - Consider logical timing and travel distances between locations
-  - Use the provided place IDs when referencing specific venues
+  - Use the place codes (e.g. "L3") when referencing specific venues
   - Include realistic time slots (e.g., "9:00 AM", "2:30 PM")
   - Suggest appropriate durations (e.g., "2 hours", "45 minutes")
   - Provide helpful notes for each activity (tips, what to expect, etc.)
   - Start each day around 8-9 AM and end by 8-9 PM
-  - Group nearby activities together to minimize travel time`
+  - Group places with close coordinates on the same day to minimize travel time`
     );
 
   return {
     itinerary: itinerary.map((day) => ({
       day: day.day,
-      activities: day.activities.map(({ placeId, ...activity }, index) => ({
-        ...activity,
-        ...(placeId ? { placeId } : {}),
-        id: index + 1,
-      })),
+      activities: day.activities.map(({ place, ...activity }, index) => {
+        // Only codes from the list count; anything else means no place.
+        const placeId = place ? codes.get(place) : undefined;
+        return { ...activity, ...(placeId ? { placeId } : {}), id: index + 1 };
+      }),
     })),
   };
 }
