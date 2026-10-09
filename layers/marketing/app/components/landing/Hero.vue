@@ -6,7 +6,7 @@
       </UBadge>
       <h1 class="mt-4 text-4xl font-extrabold leading-[1.05] tracking-tight text-highlighted sm:text-5xl lg:text-6xl">
         Decidan juntos qué hacer,
-        <span class="text-mango-600">sin perderse en el chat</span>
+        <span class="text-mango-700 dark:text-mango-500">sin perderse en el chat</span>
       </h1>
       <p class="mt-5 max-w-xl text-lg text-muted">
         Crea el plan y compártelo en WhatsApp. Cada quien dice cuánto puede

@@ -122,7 +122,7 @@ async function duplicateTrip() {
           <section v-for="day in trip.itinerary" :key="day.day">
             <div class="mb-4 flex items-center gap-3">
               <div
-                class="flex size-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-inverted"
+                class="flex size-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-mango-950"
               >
                 {{ day.day }}
               </div>

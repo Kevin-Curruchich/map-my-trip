@@ -30,7 +30,7 @@ MapMyTrip aún no está en producción y la landing es el primer contacto. Hoy:
 | Token | Valor | Uso |
 |---|---|---|
 | Mango (primario) | `#FFA51F` | Botones principales, acentos, logo |
-| Mango texto | `#E58A00` | Texto acentuado sobre blanco ("Trip", palabras destacadas) |
+| Mango texto | `#B86A00` (títulos, ≥ 3:1) y `#8A5000` (texto normal, ≥ 4.5:1) | Texto acentuado sobre blanco. `#E58A00` solo para el logotipo ("Trip"), que está exento de contraste |
 | Verde (secundario) | `#12A150` | Éxito, votos, etiquetas, enlaces secundarios |
 | Verde texto | `#0B7A3B` sobre `#E7F6EC` | Etiquetas y badges verdes |
 | Tinta | `#1C1917` | Texto principal, fondo del bloque CTA final |
@@ -81,7 +81,7 @@ Página `layers/marketing/app/pages/index.vue` armada con componentes de la capa
 ### Hero
 
 - Etiqueta: "Planes en grupo con IA".
-- Título: "Decidan juntos qué hacer, *sin perderse en el chat*" (la segunda parte en mango texto).
+- Título: "Decidan juntos qué hacer, *sin perderse en el chat*" (la segunda parte en mango texto de títulos, `#B86A00`).
 - Texto: "Crea el plan y compártelo en WhatsApp. Cada quien dice cuánto puede gastar y qué le gustaría; la IA propone 3 planes con lugares reales y el grupo vota."
 - Botón principal: **"Empieza gratis"** → `/e/new`.
 - Enlace secundario: "o planea un viaje →" → `/trips` (pide login si no hay sesión; ver la sección 3).

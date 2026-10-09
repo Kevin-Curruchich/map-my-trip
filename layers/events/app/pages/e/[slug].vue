@@ -279,7 +279,7 @@ async function copyLink() {
       class="ring-2 ring-primary"
     >
       <template #header>
-        <p class="text-sm font-medium text-primary">Plan final</p>
+        <p class="text-sm font-medium text-mango-800 dark:text-mango-400">Plan final</p>
         <h2 class="text-xl font-bold">{{ winner.title }}</h2>
       </template>
       <p>{{ winner.description }}</p>
