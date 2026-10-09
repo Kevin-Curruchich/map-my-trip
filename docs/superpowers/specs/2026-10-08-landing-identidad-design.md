@@ -45,18 +45,18 @@ Manrope (Google Fonts) para todo el sitio. Pesos: 400, 500, 700 y 800. Los títu
 
 ### Logo
 
-Concepto "chat que es un pin": una burbuja de chat con la punta hacia abajo que marca un lugar, con tres puntos dentro; el del centro es verde y representa la opción elegida.
+Concepto "chat que es un pin": una burbuja de chat con la punta hacia abajo que marca un lugar, con dos puntos y, entre ellos, un medio círculo que forma una sonrisa (los "escribiendo…" de un chat que sonríe). Todo en tinta sobre mango para que se lea a 16 px.
 
 SVG de referencia (viewBox 64×64), que se refina al implementar sin cambiar el concepto:
 
 ```svg
 <path d="M14 6h36a10 10 0 0 1 10 10v22a10 10 0 0 1-10 10H41l-9 12-9-12h-9A10 10 0 0 1 4 38V16A10 10 0 0 1 14 6z" fill="#FFA51F"/>
-<circle cx="19" cy="27" r="4.5" fill="#1C1917"/>
-<circle cx="32" cy="27" r="4.5" fill="#12A150"/>
-<circle cx="45" cy="27" r="4.5" fill="#1C1917"/>
+<circle cx="17" cy="24" r="4.5" fill="#1C1917"/>
+<path d="M25 23h14a7 7 0 0 1-14 0z" fill="#1C1917" />
+<circle cx="47" cy="24" r="4.5" fill="#1C1917"/>
 ```
 
-Variantes: a color (la de arriba), de un solo color oscuro (burbuja tinta con puntos mango/verde/mango) y de un solo color claro (para fondos oscuros). El nombre se escribe "MapMy**Trip**" en Manrope 800, con "Trip" en mango texto.
+Variantes: a color (la de arriba), de un solo color oscuro (burbuja tinta con la cara en mango) y de un solo color claro (para fondos oscuros). El nombre se escribe "MapMy**Trip**" en Manrope 800, con "Trip" en mango texto.
 
 ### Aplicación en el código
 

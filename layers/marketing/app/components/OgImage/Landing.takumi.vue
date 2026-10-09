@@ -9,9 +9,9 @@
           d="M14 6h36a10 10 0 0 1 10 10v22a10 10 0 0 1-10 10H41l-9 12-9-12h-9A10 10 0 0 1 4 38V16A10 10 0 0 1 14 6z"
           fill="#1C1917"
         />
-        <circle cx="19" cy="27" r="4.5" fill="#FFA51F" />
-        <circle cx="32" cy="27" r="4.5" fill="#12A150" />
-        <circle cx="45" cy="27" r="4.5" fill="#FFA51F" />
+        <circle cx="17" cy="24" r="4.5" fill="#FFA51F" />
+        <path d="M25 23h14a7 7 0 0 1-14 0z" fill="#FFA51F" />
+        <circle cx="47" cy="24" r="4.5" fill="#FFA51F" />
       </svg>
       <span class="ml-4 text-5xl font-extrabold" style="letter-spacing: -0.03em">MapMyTrip</span>
     </div>
