@@ -2,3 +2,53 @@
 @import "@nuxt/ui";
 
 @source '../../../../';
+
+@theme static {
+  /* @nuxt/fonts (bundled with Nuxt UI) downloads Manrope from Google Fonts. */
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+
+  /* Brand mango: 500 is the primary, 600 is for text on white. */
+  --color-mango-50: #fff8eb;
+  --color-mango-100: #ffedcc;
+  --color-mango-200: #ffd999;
+  --color-mango-300: #ffc266;
+  --color-mango-400: #ffb13d;
+  --color-mango-500: #ffa51f;
+  --color-mango-600: #e58a00;
+  --color-mango-700: #b86a00;
+  --color-mango-800: #8a5000;
+  --color-mango-900: #5c3500;
+  --color-mango-950: #2b1a00;
+
+  /* Brand green: 500 is success, 700 on 50 for badges. */
+  --color-verde-50: #e7f6ec;
+  --color-verde-100: #cff0da;
+  --color-verde-200: #a3e2b9;
+  --color-verde-300: #6fcf91;
+  --color-verde-400: #3bb86a;
+  --color-verde-500: #12a150;
+  --color-verde-600: #0e8a44;
+  --color-verde-700: #0b7a3b;
+  --color-verde-800: #0a5e2f;
+  --color-verde-900: #084424;
+  --color-verde-950: #042714;
+}
+
+/* Sections fade in as they scroll into view; no JS, and skipped for people
+   who ask for less motion or browsers without scroll-driven animations. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 35%;
+    }
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
