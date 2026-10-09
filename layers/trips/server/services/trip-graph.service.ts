@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { END, START, StateGraph, StateSchema } from "@langchain/langgraph";
-import { useChatModel } from "./llm.service";
+import { useChatModel, usePlannerModel } from "./llm.service";
 import { locateDestination, searchPlaces } from "./places.service";
 import {
   checkItinerary,
@@ -71,8 +71,9 @@ const TripState = new StateSchema({
     .optional(),
   initialProblems: z.number().optional(),
   corrections: z.number().optional(),
-  // Set by the evals to compare with fewer corrections.
+  // Set by the evals to compare with fewer corrections or another model.
   maxCorrections: z.number().optional(),
+  plannerModel: z.string().optional(),
   // Routed travel between places, kept across corrections (see Legs).
   legs: z
     .record(
@@ -197,7 +198,7 @@ ${state.problems!.map((problem) => `  - ${problem.message}`).join("\n")}
   a place code: every activity that had one keeps one.`
     : "";
 
-  const { itinerary } = await useChatModel()
+  const { itinerary } = await usePlannerModel(state.plannerModel)
     .withStructuredOutput(
       z.object({
         itinerary: z.array(

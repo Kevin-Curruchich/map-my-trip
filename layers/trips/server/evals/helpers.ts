@@ -16,13 +16,15 @@ export async function inBatches<T, R>(
 
 // Query options shared by the eval tasks:
 // ?only=<part of a scenario name>&repeat=<runs per scenario>&corrections=<max>
+// &planner=<OpenAI model that writes the itinerary>
 export function evalOptions(payload: Record<string, unknown>) {
   const only = typeof payload.only === "string" ? payload.only : "";
   const repeat = Math.max(1, Math.min(5, Number(payload.repeat) || 1));
   // Unset keeps the planner's own limit; 0 measures it without corrections.
   const corrections =
     payload.corrections === undefined ? undefined : Math.max(0, Number(payload.corrections) || 0);
-  return { only, repeat, corrections };
+  const planner = typeof payload.planner === "string" ? payload.planner : undefined;
+  return { only, repeat, corrections, planner };
 }
 
 // Every scenario `repeat` times: one run says little when the model varies.

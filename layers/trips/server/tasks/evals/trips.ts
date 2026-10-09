@@ -20,12 +20,12 @@ const JudgeSchema = z.object({
 
 async function runScenario(
   { scenario, run }: { scenario: (typeof tripScenarios)[number]; run: number },
-  maxCorrections: number | undefined
+  { maxCorrections, plannerModel }: { maxCorrections?: number; plannerModel?: string }
 ) {
   const started = Date.now();
   try {
     const state = await tripGraph.invoke(
-      { prompt: scenario.prompt, maxCorrections },
+      { prompt: scenario.prompt, maxCorrections, plannerModel },
       { runName: "generate-trip" }
     );
     const places = new Map((state.places ?? []).map((place) => [place.id, place]));
@@ -109,7 +109,7 @@ export default defineTask({
     const options = evalOptions(payload);
     const scenarios = tripScenarios.filter((s) => s.name.includes(options.only));
     const results = await inBatches(repeated(scenarios, options.repeat), 3, (item) =>
-      runScenario(item, options.corrections)
+      runScenario(item, { maxCorrections: options.corrections, plannerModel: options.planner })
     );
 
     const done = results.flatMap((r) => (r.ok ? [r] : []));
