@@ -20,6 +20,46 @@ function circle(latitude: number, longitude: number, radius: number) {
   return { circle: { center: { latitude, longitude }, radius } };
 }
 
+// For now every search stays in Guatemala.
+const REGION = "gt";
+const GUATEMALA = {
+  low: { latitude: 13.73, longitude: -92.24 },
+  high: { latitude: 17.82, longitude: -88.22 },
+};
+
+const METERS_PER_DEGREE = 111_320;
+
+export function isInGuatemala({ latitude, longitude }: { latitude: number; longitude: number }) {
+  return (
+    latitude >= GUATEMALA.low.latitude &&
+    latitude <= GUATEMALA.high.latitude &&
+    longitude >= GUATEMALA.low.longitude &&
+    longitude <= GUATEMALA.high.longitude
+  );
+}
+
+// Text Search only restricts to rectangles: the box around a circle.
+function boxAround(center: { latitude: number; longitude: number }, radius: number) {
+  const latDelta = radius / METERS_PER_DEGREE;
+  const lngDelta =
+    radius /
+    (METERS_PER_DEGREE * Math.max(Math.cos((center.latitude * Math.PI) / 180), 0.01));
+  return {
+    rectangle: {
+      low: { latitude: center.latitude - latDelta, longitude: center.longitude - lngDelta },
+      high: { latitude: center.latitude + latDelta, longitude: center.longitude + lngDelta },
+    },
+  };
+}
+
+type AddressComponents = { shortText?: string; types?: string[] }[];
+
+// The Guatemala box also covers border towns of its neighbours.
+function inRegion(addressComponents?: AddressComponents) {
+  const country = addressComponents?.find((part) => part.types?.includes("country"));
+  return country?.shortText?.toLowerCase() === REGION;
+}
+
 export interface PlaceSuggestion {
   placeId: string;
   name: string;
@@ -51,9 +91,11 @@ export async function autocompletePlaces(
       input,
       sessionToken,
       languageCode: "es",
-      ...(near
-        ? { locationBias: circle(near.latitude, near.longitude, 50000) }
-        : {}),
+      regionCode: REGION,
+      includedRegionCodes: [REGION],
+      locationBias: near
+        ? circle(near.latitude, near.longitude, 50000)
+        : { rectangle: GUATEMALA },
     },
   });
 
@@ -94,6 +136,7 @@ export async function getPlaceDetails(
     {
       query: {
         languageCode: "es",
+        regionCode: REGION,
         ...(sessionToken ? { sessionToken } : {}),
       },
     }
@@ -117,7 +160,7 @@ const PRICE_LEVELS: Record<string, StepPlace["priceLevel"]> = {
 };
 
 // Real places for one step of a plan, e.g. "café de especialidad", ranked by
-// Google around the event.
+// Google and kept within the radius around the event.
 // https://developers.google.com/maps/documentation/places/web-service/text-search
 export async function searchPlacesNear(
   query: string,
@@ -135,23 +178,29 @@ export async function searchPlacesNear(
       priceLevel?: string;
       googleMapsUri?: string;
       businessStatus?: string;
+      addressComponents?: AddressComponents;
     }[];
   }>(
     "/places:searchText",
-    "places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.priceLevel,places.googleMapsUri,places.businessStatus",
+    "places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.priceLevel,places.googleMapsUri,places.businessStatus,places.addressComponents",
     {
       method: "POST",
       body: {
         textQuery: query,
         languageCode: "es",
+        regionCode: REGION,
         pageSize: 6,
-        locationBias: circle(center.latitude, center.longitude, radius),
+        locationRestriction: boxAround(center, radius),
       },
     }
   );
 
   return (response.places ?? [])
-    .filter((place) => place.businessStatus !== "CLOSED_PERMANENTLY")
+    .filter(
+      (place) =>
+        place.businessStatus !== "CLOSED_PERMANENTLY" &&
+        inRegion(place.addressComponents)
+    )
     .map((place) => ({
       source: "google" as const,
       id: place.id,
@@ -171,13 +220,24 @@ export async function searchPlacesNear(
     }));
 }
 
-// Coordinates for an event that only has a typed place name.
+// Coordinates for an event that only has a typed place name, in Guatemala.
 export async function geocodeLabel(label: string) {
   const response = await placesFetch<{
-    places?: { location?: { latitude: number; longitude: number } }[];
-  }>("/places:searchText", "places.location", {
+    places?: {
+      location?: { latitude: number; longitude: number };
+      addressComponents?: AddressComponents;
+    }[];
+  }>("/places:searchText", "places.location,places.addressComponents", {
     method: "POST",
-    body: { textQuery: label, languageCode: "es", pageSize: 1 },
+    body: {
+      textQuery: label,
+      languageCode: "es",
+      regionCode: REGION,
+      pageSize: 5,
+      locationRestriction: { rectangle: GUATEMALA },
+    },
   });
-  return response.places?.[0]?.location ?? null;
+  return (
+    response.places?.find((place) => inRegion(place.addressComponents))?.location ?? null
+  );
 }
