@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.0](https://github.com/Kevin-Curruchich/map-my-trip/compare/v0.2.0...v0.3.0) (2026-10-09)
+
+
+### Features
+
+* **events:** the plan's owner is always its Google account ([5bb79f8](https://github.com/Kevin-Curruchich/map-my-trip/commit/5bb79f8e2906f685ed307f8f136fde70bb34365d))
+
+
+### Bug Fixes
+
+* **auth:** keep return paths with encoded spaces and reject control characters ([4c83ee3](https://github.com/Kevin-Curruchich/map-my-trip/commit/4c83ee3c275acd9690c4fb3d25cc17135af48360))
+* **base:** return to the current page after signing in from the header ([4673820](https://github.com/Kevin-Curruchich/map-my-trip/commit/4673820c5f421884d58db6322477831570113455))
+* **events:** explain when a plan belongs to another Google account ([af8428b](https://github.com/Kevin-Curruchich/map-my-trip/commit/af8428b103e962f8a2d1051d857518d206d892b8))
+* plan owner is always its Google account, plus login follow-ups ([2c5af5f](https://github.com/Kevin-Curruchich/map-my-trip/commit/2c5af5f1ede89bdd33a6da1571ed15292f33ca20))
+
 ## [0.2.0](https://github.com/Kevin-Curruchich/map-my-trip/compare/v0.1.0...v0.2.0) (2026-10-09)
 
 
