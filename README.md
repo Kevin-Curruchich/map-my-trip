@@ -32,28 +32,28 @@ At its core, MapMyTrip is an intelligent travel planning assistant. It allows us
 
 ## Setup
 
-Requires Node.js 24 (see `.nvmrc`) and pnpm.
+Requires Node.js 24 (see `.nvmrc`), pnpm and Docker (for the local database).
 
 ```bash
 pnpm install
-```
-
-Create a `.env.dev` file with:
-
-```bash
-NUXT_SESSION_PASSWORD=          # at least 32 characters
-NUXT_OAUTH_GOOGLE_CLIENT_ID=
-NUXT_OAUTH_GOOGLE_CLIENT_SECRET=
-NUXT_OAUTH_GOOGLE_REDIRECT_URL= # e.g. http://localhost:3000/auth/google
-NUXT_OPENAI_API_KEY=
-NUXT_GOOGLE_PLACES_API_KEY=
-NUXT_DATABASE_URL=             # Postgres, e.g. postgresql://postgres:postgres@localhost:5432/mapmytrip
-NUXT_ADMIN_EMAILS=              # who can manage /admin/places, comma separated
-NUXT_PUBLIC_GOOGLE_MAPS_API_KEY=
-NUXT_PUBLIC_GOOGLE_MAPS_MAP_ID= # optional
+cp .env.example .env.dev   # then fill in the keys
+pnpm db:up                 # local Postgres on localhost:5432
+pnpm dev
 ```
 
 > All values are read at runtime, so the same build works in every environment.
+
+### Local database
+
+Development uses its own Postgres from `docker-compose.yml`, never the production database (Supabase). The events layer runs its migrations automatically when the server starts, against whatever `NUXT_DATABASE_URL` points to, so a local database also keeps unreviewed migrations away from production.
+
+`.env.example` already points `NUXT_DATABASE_URL` at it:
+
+```bash
+NUXT_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/mapmytrip
+```
+
+The data lives in a Docker volume and survives `pnpm db:down`. Use `pnpm db:reset` to start from an empty database.
 
 ## Scripts
 
@@ -63,6 +63,9 @@ pnpm build      # production build (Node server in .output/)
 pnpm preview    # preview the production build
 pnpm lint       # eslint --fix
 pnpm typecheck  # vue-tsc via nuxt typecheck
+pnpm db:up      # start the local Postgres (Docker) and wait until it's ready
+pnpm db:down    # stop it, keeping the data
+pnpm db:reset   # delete the local data and start again empty
 ```
 
 ## Releases
