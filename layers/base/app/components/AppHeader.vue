@@ -7,6 +7,12 @@ const { loggedIn, userName, userPicture, logout } = useAuth();
 // Section links only make sense on the landing, where the sections live.
 const isLanding = computed(() => route.path === "/");
 
+// Come back to the current page after signing in (e.g. a plan opened from
+// WhatsApp); from the landing, the default after login is "Mis planes".
+const loginTo = computed(() =>
+  isLanding.value ? "/login" : { path: "/login", query: { redirect: route.fullPath } }
+);
+
 const userMenu = computed<DropdownMenuItem[]>(() => [
   { label: userName.value, type: "label", icon: "i-lucide-user" },
   { type: "separator" },
@@ -40,7 +46,7 @@ const userMenu = computed<DropdownMenuItem[]>(() => [
             <UAvatar :src="userPicture" :alt="userName" size="sm" class="cursor-pointer" />
           </UDropdownMenu>
         </template>
-        <UButton v-else to="/login" variant="outline" color="neutral" size="sm">
+        <UButton v-else :to="loginTo" variant="outline" color="neutral" size="sm">
           Entrar
         </UButton>
       </nav>
