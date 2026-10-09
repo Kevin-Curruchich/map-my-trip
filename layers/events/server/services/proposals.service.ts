@@ -87,7 +87,12 @@ type Center = { latitude: number; longitude: number };
 async function resolveCenter(
   event: Pick<EventRecord, "id" | "city" | "latitude" | "longitude">
 ): Promise<{ center: Center; radius: number } | null> {
-  if (event.latitude !== null && event.longitude !== null) {
+  // Coordinates saved before searches were kept to Guatemala are geocoded again.
+  if (
+    event.latitude !== null &&
+    event.longitude !== null &&
+    isInGuatemala({ latitude: event.latitude, longitude: event.longitude })
+  ) {
     return {
       center: { latitude: event.latitude, longitude: event.longitude },
       radius: RADIUS_PRECISE,

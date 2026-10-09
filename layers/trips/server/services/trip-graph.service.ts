@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { END, START, StateGraph, StateSchema } from "@langchain/langgraph";
 import { useChatModel } from "./llm.service";
-import { searchPlaces } from "./places.service";
+import { locateDestination, searchPlaces } from "./places.service";
 
 const ActivitySchema = z.object({
   name: z.string().describe("Short description of the activity"),
@@ -47,11 +47,14 @@ async function generateMetadata(state: State) {
       z.object({
         title: z.string().describe("A catchy and concise title for the trip"),
         description: z.string().describe("A brief description of the trip"),
-        destination: z.string().describe("The main destination of the trip"),
+        destination: z
+          .string()
+          .describe("The main destination of the trip, a place in Guatemala"),
       })
     )
     .invoke(
-      `Based on the following trip idea: "${state.prompt}", generate a catchy title, a brief description and identify the main destination.`
+      `Based on the following trip idea: "${state.prompt}", generate a catchy title, a brief description and identify the main destination.
+      For now every trip is in Guatemala: when the idea names no place, pick a fitting destination there.`
     );
 
   return metadata;
@@ -77,9 +80,13 @@ async function generateTags(state: State) {
 }
 
 async function findPlaces(state: State) {
+  const center = await locateDestination(state.destination);
   const results = await Promise.all(
     (state.tags ?? []).map((tag) =>
-      searchPlaces(`${tag} in ${state.destination}`)
+      searchPlaces(`${tag} in ${state.destination}`, center).catch((error) => {
+        console.error(`Places search failed for "${tag}":`, error);
+        return [];
+      })
     )
   );
 
