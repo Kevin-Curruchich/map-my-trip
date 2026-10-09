@@ -1,17 +1,6 @@
 <template>
   <div>
-    <!-- Hero Section -->
-    <UPageHero
-      headline="AI Powered Travel Planner"
-      title="Plan Your Dream Trip"
-      description="Discover, organize, and enjoy your travels with ease."
-      orientation="horizontal"
-      :links="[
-        { label: 'Sign Up', to: '/login', color: 'primary', size: 'lg' },
-        { label: 'Planear con mi grupo', to: '/e/new', variant: 'outline', size: 'lg' },
-        { label: 'Why MapMyTrip?', to: '#why-choose-us', variant: 'subtle' },
-      ]"
-    />
+    <LandingHero />
     <!-- Features Section -->
     <UPageSection
       id="why-choose-us"
