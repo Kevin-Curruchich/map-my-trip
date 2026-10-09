@@ -52,10 +52,18 @@ export default defineEventHandler(async (event) => {
   // Plans created signed out are claimed by the account that first uses the
   // AI on them, so they show up in "Mis planes".
   if (!found.ownerSub) {
-    await db
+    const claimed = await db
       .update(tables.events)
       .set({ ownerSub: user.sub })
-      .where(and(eq(tables.events.id, found.id), isNull(tables.events.ownerSub)));
+      .where(and(eq(tables.events.id, found.id), isNull(tables.events.ownerSub)))
+      .returning({ id: tables.events.id });
+    // Another account claimed it between our read and this update.
+    if (claimed.length === 0) {
+      throw createError({
+        statusCode: 403,
+        statusMessage: "Only the event creator can do this",
+      });
+    }
   }
 
   // Provider errors carry their own status (e.g. 401 for a bad API key),
