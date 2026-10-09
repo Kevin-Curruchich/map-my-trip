@@ -153,7 +153,7 @@ Bloque oscuro (tinta) con el título "El próximo plan del grupo empieza aquí" 
 
 ### Cliente
 
-- `/e/[slug]`: el botón conserva el texto **"Proponer planes con IA"** (o "Proponer otros planes"). Si no hay sesión, al pulsarlo se abre un `UModal` que explica que debe iniciar sesión para usar la IA, con el botón "Continuar con Google". Ese botón va al login con regreso a `/e/{slug}`, y al volver el creador pulsa de nuevo y genera. El token de creador sigue en el navegador, así que conserva la propiedad del plan.
+- `/e/[slug]`: el botón conserva el texto **"Proponer planes con IA"** (o "Proponer otros planes"). Si no hay sesión, al pulsarlo se abre un `UModal` que explica que debe iniciar sesión para usar la IA, con el botón "Continuar con Google". Ese botón va directo a Google (sin pasar por `/login`) con regreso a `/e/{slug}`, y al volver el creador pulsa de nuevo y genera. El token de creador sigue en el navegador, así que conserva la propiedad del plan.
 - Middleware `auth` (`layers/auth/app/middleware/auth.ts`): redirige a `/login?redirect=<ruta actual>`.
 - `/login`: en español, con el logo nuevo y el texto "Entra para usar la IA y guardar tus planes". Si ya hay sesión, va a la ruta de `redirect` validada (o a `/plans`).
 
