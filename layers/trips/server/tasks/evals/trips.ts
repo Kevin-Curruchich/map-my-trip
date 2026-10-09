@@ -73,6 +73,9 @@ ${itinerary}
         unknownPlaces: activities.filter((a) => a.placeId && !places.has(a.placeId)).length,
         longestHop: hops.length ? formatDistance(Math.max(...hops)) : null,
         farHops: hops.filter((hop) => hop > FAR_HOP).length,
+        initialProblems: state.initialProblems ?? 0,
+        problemsLeft: (state.problems ?? []).map((problem) => problem.message),
+        corrections: state.corrections ?? 0,
       },
       grade,
       itinerary,
@@ -103,6 +106,8 @@ export default defineTask({
       withPlace: average(done.map((r) => r.checks.withPlace)),
       unknownPlaces: done.reduce((sum, r) => sum + r.checks.unknownPlaces, 0),
       farHops: done.reduce((sum, r) => sum + r.checks.farHops, 0),
+      initialProblems: done.reduce((sum, r) => sum + r.checks.initialProblems, 0),
+      problemsLeft: done.reduce((sum, r) => sum + r.checks.problemsLeft.length, 0),
       seconds: average(done.map((r) => r.seconds)),
     };
 
@@ -115,6 +120,7 @@ export default defineTask({
         withPlace: r.checks.withPlace.toFixed(2),
         longestHop: r.checks.longestHop,
         farHops: r.checks.farHops,
+        problems: `${r.checks.initialProblems} → ${r.checks.problemsLeft.length}`,
       }))
     );
     const file = await saveReport("trips", { summary, results });

@@ -2,6 +2,10 @@ import { z } from "zod";
 import { END, START, StateGraph, StateSchema } from "@langchain/langgraph";
 import { useChatModel } from "./llm.service";
 import { locateDestination, searchPlaces } from "./places.service";
+import { checkItinerary } from "./itinerary-checks.service";
+
+// How many times an itinerary that fails the checks goes back to the AI.
+const MAX_CORRECTIONS = 2;
 
 const ActivitySchema = z.object({
   name: z.string().describe("Short description of the activity"),
@@ -17,6 +21,18 @@ const ActivitySchema = z.object({
     .nullable()
     .describe('Code of the place from the available places, e.g. "L3", or null'),
 });
+
+const ItinerarySchema = z.array(
+  z.object({
+    day: z.number(),
+    activities: z.array(
+      ActivitySchema.omit({ place: true }).extend({
+        id: z.number(),
+        placeId: z.string().optional(),
+      })
+    ),
+  })
+);
 
 const TripState = new StateSchema({
   prompt: z.string(),
@@ -34,19 +50,15 @@ const TripState = new StateSchema({
       distance: z.number().nullable(),
     })
   ).optional(),
-  itinerary: z
-    .array(
-      z.object({
-        day: z.number(),
-        activities: z.array(
-          ActivitySchema.omit({ place: true }).extend({
-            id: z.number(),
-            placeId: z.string().optional(),
-          })
-        ),
-      })
-    )
+  // The AI's latest itinerary, and the best one so far by the checks.
+  proposed: ItinerarySchema.optional(),
+  itinerary: ItinerarySchema.optional(),
+  // What the checks found in the best itinerary, and in the first one.
+  problems: z
+    .array(z.object({ kind: z.string(), day: z.number(), message: z.string() }))
     .optional(),
+  initialProblems: z.number().optional(),
+  corrections: z.number().optional(),
 });
 
 type State = typeof TripState.State;
@@ -124,9 +136,40 @@ function describePlaces(places: TripPlace[]) {
     .join("\n");
 }
 
+// The itinerary as the AI wrote it, with place codes instead of ids.
+function describeItinerary(itinerary: NonNullable<State["itinerary"]>, places: TripPlace[]) {
+  const codes = new Map(places.map((place, index) => [place.id, `L${index + 1}`]));
+  return itinerary
+    .map(
+      (day) =>
+        `  Day ${day.day}\n${day.activities
+          .map(
+            (activity) =>
+              `    ${activity.time} (${activity.duration}) ${activity.name}${activity.placeId ? ` [${codes.get(activity.placeId)}]` : ""}`
+          )
+          .join("\n")}`
+    )
+    .join("\n");
+}
+
 async function generateItinerary(state: State) {
   const places = state.places ?? [];
   const codes = new Map(places.map((place, index) => [`L${index + 1}`, place.id]));
+  // A second pass gets back the best itinerary so far and what failed in it.
+  const correcting = Boolean(state.itinerary && state.problems?.length);
+  const correction = correcting
+    ? `
+
+  Your previous itinerary failed some checks:
+${describeItinerary(state.itinerary!, places)}
+
+  Problems to fix:
+${state.problems!.map((problem) => `  - ${problem.message}`).join("\n")}
+
+  Write the whole itinerary again with every problem fixed. Keep what works.
+  Leave enough time between activities to travel from one place to the next.`
+    : "";
+
   const { itinerary } = await useChatModel()
     .withStructuredOutput(
       z.object({
@@ -154,11 +197,15 @@ ${describePlaces(places)}
   - Suggest appropriate durations (e.g., "2 hours", "45 minutes")
   - Provide helpful notes for each activity (tips, what to expect, etc.)
   - Start each day around 8-9 AM and end by 8-9 PM
-  - Group places with close coordinates on the same day to minimize travel time`
+  - Group places with close coordinates on the same day to minimize travel time
+  - Leave time to travel between places that are not within walking distance;
+    a longer trip (a boat, a shuttle) can be its own "travel" activity${correction}`,
+      { runName: correcting ? "correct-itinerary" : "generate-itinerary" }
     );
 
   return {
-    itinerary: itinerary.map((day) => ({
+    corrections: (state.corrections ?? 0) + (correcting ? 1 : 0),
+    proposed: itinerary.map((day) => ({
       day: day.day,
       activities: day.activities.map(({ place, ...activity }, index) => {
         // Only codes from the list count; anything else means no place.
@@ -169,15 +216,38 @@ ${describePlaces(places)}
   };
 }
 
-// metadata and tags run in parallel; places need both the tags and the destination.
+// Keeps the AI's latest itinerary when it is the first one or has fewer
+// problems than the best so far.
+function reviewItinerary(state: State) {
+  const places = new Map((state.places ?? []).map((place) => [place.id, place]));
+  const problems = checkItinerary(state.proposed ?? [], places);
+  if (!state.itinerary) {
+    return { itinerary: state.proposed, problems, initialProblems: problems.length };
+  }
+  if (problems.length < (state.problems?.length ?? 0)) {
+    return { itinerary: state.proposed, problems };
+  }
+  return {};
+}
+
+function afterReview(state: State) {
+  return state.problems?.length && (state.corrections ?? 0) < MAX_CORRECTIONS
+    ? "generateItinerary"
+    : END;
+}
+
+// metadata and tags run in parallel; places need both the tags and the
+// destination. An itinerary that fails the checks goes back to the AI.
 export const tripGraph = new StateGraph(TripState)
   .addNode("generateMetadata", generateMetadata)
   .addNode("generateTags", generateTags)
   .addNode("findPlaces", findPlaces)
   .addNode("generateItinerary", generateItinerary)
+  .addNode("checkItinerary", reviewItinerary)
   .addEdge(START, "generateMetadata")
   .addEdge(START, "generateTags")
   .addEdge(["generateMetadata", "generateTags"], "findPlaces")
   .addEdge("findPlaces", "generateItinerary")
-  .addEdge("generateItinerary", END)
+  .addEdge("generateItinerary", "checkItinerary")
+  .addConditionalEdges("checkItinerary", afterReview, ["generateItinerary", END])
   .compile();
