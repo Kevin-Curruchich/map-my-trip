@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.4.0](https://github.com/Kevin-Curruchich/map-my-trip/compare/v0.3.1...v0.4.0) (2026-10-09)
+
+
+### Features
+
+* check plans in code, correct them, and grade both planners with evals ([4fbae38](https://github.com/Kevin-Curruchich/map-my-trip/commit/4fbae38958292f78467a955e1880864a9d9224e7))
+* check trip itineraries in code and send failures back to the model ([750521f](https://github.com/Kevin-Curruchich/map-my-trip/commit/750521f072d1e22123c4b093ddabd25e81603419))
+* give the planners distances and opening hours, validate trip places ([9022b94](https://github.com/Kevin-Curruchich/map-my-trip/commit/9022b94b5aea11e2f538cca216485781792f2c84))
+* real travel times from the Routes API, shown as itinerary steps ([121edfa](https://github.com/Kevin-Curruchich/map-my-trip/commit/121edfa80c9aaa5ab357a6f9f6b2e54ed684fc82))
+* repair trip schedules in code and compare eval runs ([24e5fc5](https://github.com/Kevin-Curruchich/map-my-trip/commit/24e5fc5b99fe139e059ffd8d6dbb40e9fc308794))
+* smarter planners with checks, real travel times and evals ([ad3b8b6](https://github.com/Kevin-Curruchich/map-my-trip/commit/ad3b8b6c2ce2cfb55dc3a67f4d267fe7232447ff))
+* turn off model corrections for trip itineraries ([35d86f8](https://github.com/Kevin-Curruchich/map-my-trip/commit/35d86f8de4c3d59c9fb9098bf4832838e921a133))
+* write trip itineraries with gpt-4.1 and grade evals with gpt-5.5 ([190b1c1](https://github.com/Kevin-Curruchich/map-my-trip/commit/190b1c1a491e5c97daa205651a3db840d2129749))
+
 ## [0.3.1](https://github.com/Kevin-Curruchich/map-my-trip/compare/v0.3.0...v0.3.1) (2026-10-09)
 
 
