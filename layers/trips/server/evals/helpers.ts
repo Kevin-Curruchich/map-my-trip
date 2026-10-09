@@ -14,6 +14,24 @@ export async function inBatches<T, R>(
   return results;
 }
 
+// Query options shared by the eval tasks:
+// ?only=<part of a scenario name>&repeat=<runs per scenario>&corrections=<max>
+export function evalOptions(payload: Record<string, unknown>) {
+  const only = typeof payload.only === "string" ? payload.only : "";
+  const repeat = Math.max(1, Math.min(5, Number(payload.repeat) || 1));
+  // Unset keeps the planner's own limit; 0 measures it without corrections.
+  const corrections =
+    payload.corrections === undefined ? undefined : Math.max(0, Number(payload.corrections) || 0);
+  return { only, repeat, corrections };
+}
+
+// Every scenario `repeat` times: one run says little when the model varies.
+export function repeated<T>(scenarios: T[], repeat: number) {
+  return scenarios.flatMap((scenario) =>
+    Array.from({ length: repeat }, (_, run) => ({ scenario, run: run + 1 }))
+  );
+}
+
 export function average(values: number[]) {
   if (values.length === 0) return null;
   return Math.round((values.reduce((sum, value) => sum + value, 0) / values.length) * 100) / 100;

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { END, START, StateGraph, StateSchema } from "@langchain/langgraph";
 import { useChatModel } from "./llm.service";
 import { locateDestination, searchPlaces } from "./places.service";
-import { checkItinerary } from "./itinerary-checks.service";
+import { checkItinerary, repairSchedule } from "./itinerary-checks.service";
 
 // How many times an itinerary that fails the checks goes back to the AI.
 const MAX_CORRECTIONS = 2;
@@ -59,6 +59,8 @@ const TripState = new StateSchema({
     .optional(),
   initialProblems: z.number().optional(),
   corrections: z.number().optional(),
+  // Set by the evals to compare with fewer corrections.
+  maxCorrections: z.number().optional(),
 });
 
 type State = typeof TripState.State;
@@ -167,7 +169,9 @@ ${describeItinerary(state.itinerary!, places)}
 ${state.problems!.map((problem) => `  - ${problem.message}`).join("\n")}
 
   Write the whole itinerary again with every problem fixed. Keep what works.
-  Leave enough time between activities to travel from one place to the next.`
+  Leave enough time between activities to travel from one place to the next.
+  Fix a problem by changing times or picking another place, never by dropping
+  a place code: every activity that had one keeps one.`
     : "";
 
   const { itinerary } = await useChatModel()
@@ -216,22 +220,35 @@ ${describePlaces(places)}
   };
 }
 
-// Keeps the AI's latest itinerary when it is the first one or has fewer
-// problems than the best so far.
+// Share of activities with a place.
+function placeShare(itinerary: NonNullable<State["itinerary"]>) {
+  const activities = itinerary.flatMap((day) => day.activities);
+  return activities.length ? activities.filter((a) => a.placeId).length / activities.length : 0;
+}
+
+// Makes room to travel in the AI's latest itinerary, then keeps it when it is
+// the first one, or has fewer problems than the best so far without losing
+// places: an activity without a place escapes the checks, so dropping places
+// would look like a fix.
 function reviewItinerary(state: State) {
   const places = new Map((state.places ?? []).map((place) => [place.id, place]));
-  const problems = checkItinerary(state.proposed ?? [], places);
+  const proposed = repairSchedule(state.proposed ?? [], places);
+  const problems = checkItinerary(proposed, places);
   if (!state.itinerary) {
-    return { itinerary: state.proposed, problems, initialProblems: problems.length };
+    return { itinerary: proposed, problems, initialProblems: problems.length };
   }
-  if (problems.length < (state.problems?.length ?? 0)) {
-    return { itinerary: state.proposed, problems };
+  if (
+    problems.length < (state.problems?.length ?? 0) &&
+    placeShare(proposed) >= placeShare(state.itinerary)
+  ) {
+    return { itinerary: proposed, problems };
   }
   return {};
 }
 
 function afterReview(state: State) {
-  return state.problems?.length && (state.corrections ?? 0) < MAX_CORRECTIONS
+  return state.problems?.length &&
+    (state.corrections ?? 0) < (state.maxCorrections ?? MAX_CORRECTIONS)
     ? "generateItinerary"
     : END;
 }

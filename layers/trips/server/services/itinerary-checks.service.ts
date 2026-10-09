@@ -1,6 +1,6 @@
-// What code can tell is wrong with an itinerary: activities that overlap or go
-// out of order, too little time to travel between places, a place repeated on
-// another day.
+// Itineraries in code: times moved so there is room to travel between places,
+// and what is still wrong after that (a place repeated on another day, a day
+// that ends too late) for the AI to fix.
 
 // Roads are about this much longer than a straight line, and this fast on
 // average: a rough lower bound for the time between two places.
@@ -8,6 +8,9 @@ const ROAD_FACTOR = 1.3;
 const ROAD_SPEED_KMH = 40;
 // Moves shorter than this are on foot and fit in any gap.
 const WALKING_DISTANCE = 1500;
+// Moved activities start on a quarter hour, and a day should end by this time.
+const TIME_STEP = 15;
+const LATEST_END = 22 * 60 + 30;
 
 export interface ItineraryActivity {
   name: string;
@@ -18,7 +21,7 @@ export interface ItineraryActivity {
 }
 
 export interface ItineraryProblem {
-  kind: "overlap" | "order" | "travel" | "repeated";
+  kind: "overlap" | "order" | "travel" | "repeated" | "late";
   day: number;
   // In English, like the trip prompts: it goes back to the AI as is.
   message: string;
@@ -49,6 +52,55 @@ export function parseDuration(value: string) {
 function clock(minutes: number) {
   const hour = Math.floor(minutes / 60) % 24;
   return `${hour % 12 || 12}:${String(minutes % 60).padStart(2, "0")} ${hour < 12 ? "AM" : "PM"}`;
+}
+
+// Minutes by road between two places; 0 on foot or when either is unknown.
+function travelMinutes(from: PlacePoint | undefined, to: PlacePoint | undefined) {
+  if (from?.latitude == null || from.longitude == null || to?.latitude == null || to.longitude == null) {
+    return 0;
+  }
+  const distance = distanceInMeters(
+    { latitude: from.latitude, longitude: from.longitude },
+    { latitude: to.latitude, longitude: to.longitude }
+  );
+  if (distance < WALKING_DISTANCE) return 0;
+  return Math.round(((distance / 1000) * ROAD_FACTOR * 60) / ROAD_SPEED_KMH);
+}
+
+// Moves activities later so each one starts after the one before has ended,
+// with time to get there. The AI tends to leave no room for the road, and
+// asking it again rarely fixes that; the order and durations stay as it wrote.
+export function repairSchedule<A extends ItineraryActivity>(
+  days: { day: number; activities: A[] }[],
+  places: Map<string, PlacePoint>
+) {
+  return days.map(({ day, activities }) => {
+    let previousEnd: number | null = null;
+    let previousPlace: PlacePoint | undefined;
+    return {
+      day,
+      activities: activities.map((activity) => {
+        const place = activity.placeId ? places.get(activity.placeId) : undefined;
+        let start = parseTime(activity.time);
+        const length = parseDuration(activity.duration);
+        let moved = activity;
+        if (start !== null && previousEnd !== null) {
+          // A travel activity is the road itself: it starts when the last ends.
+          const travel =
+            activity.activityType === "travel" ? 0 : travelMinutes(previousPlace, place);
+          const earliest = previousEnd + travel;
+          if (start < earliest) {
+            start = Math.ceil(earliest / TIME_STEP) * TIME_STEP;
+            moved = { ...activity, time: clock(start) };
+          }
+        }
+        // Past an activity without a usable time or duration nothing is known.
+        previousEnd = start !== null && length !== null ? start + length : null;
+        previousPlace = place;
+        return moved;
+      }),
+    };
+  });
 }
 
 export function checkItinerary(
@@ -137,6 +189,17 @@ export function checkItinerary(
         });
       }
     });
+
+    const last = activities.at(-1);
+    const lastStart = last ? parseTime(last.time) : null;
+    const lastLength = last ? parseDuration(last.duration) : null;
+    if (last && lastStart !== null && lastLength !== null && lastStart + lastLength > LATEST_END) {
+      problems.push({
+        kind: "late",
+        day,
+        message: `Day ${day} ends at ${clock(lastStart + lastLength)} once there is time to travel between places; drop or shorten an activity so it ends by ${clock(LATEST_END)}.`,
+      });
+    }
   }
 
   return problems;

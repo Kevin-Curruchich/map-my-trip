@@ -212,7 +212,9 @@ export async function generateProposals(
 // per call when tracing is on.
 export const generateProposalsReport = traceable(async function generateProposalsReport(
   event: EventInput,
-  participants: ParticipantInput[]
+  participants: ParticipantInput[],
+  // The evals lower it to compare with fewer corrections.
+  { maxCorrections = MAX_CORRECTIONS }: { maxCorrections?: number } = {}
 ): Promise<ProposalsReport> {
   const people = participants
     .map((participant) => {
@@ -413,7 +415,7 @@ Para cada plan, en el mismo orden en que aparecen y con los mismos pasos:
   const initialProblems = problems.flat().length;
 
   let corrections = 0;
-  while (corrections < MAX_CORRECTIONS) {
+  while (corrections < maxCorrections) {
     const failing = problems.flatMap((found, planIndex) => (found.length ? [planIndex] : []));
     if (failing.length === 0) break;
     corrections++;

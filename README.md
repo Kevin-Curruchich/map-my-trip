@@ -77,6 +77,7 @@ Plans and itineraries are graded against fixed scenarios, so a prompt or model c
 - Scenarios live in `layers/events/server/evals/proposal-scenarios.ts` and `layers/trips/server/evals/trip-scenarios.ts`. When a plan comes out wrong, add its case there.
 - Each run checks in code what can be checked (places closed at their step's time, repeated, too far apart, over budget) and asks a larger model to grade the rest from 1 to 5.
 - `?only=<part of a name>` runs some scenarios: `curl localhost:3000/_nitro/tasks/evals:proposals?only=aniversario`.
+- The model varies from run to run, so compare with `?repeat=2` or more. `?corrections=0` turns off the corrections, to measure what they add.
 - Every run is saved to `.evals/` (ignored by git) with the plans it graded; the dev server's terminal prints a table.
 
 With `LANGSMITH_TRACING=true` and a key, every generation is one trace in [LangSmith](https://smith.langchain.com): the drafts, the place searches, the picks, the corrections and the judge.

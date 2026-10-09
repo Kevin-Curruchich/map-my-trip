@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { useJudgeModel } from "../../services/llm.service";
 import { tripGraph } from "../../services/trip-graph.service";
-import { average, inBatches, saveReport } from "../../evals/helpers";
+import { average, evalOptions, inBatches, repeated, saveReport } from "../../evals/helpers";
 import { tripScenarios } from "../../evals/trip-scenarios";
 
 // Two stops on the same day further apart than this need a car and a plan.
@@ -18,10 +18,16 @@ const JudgeSchema = z.object({
   issues: z.array(z.string()).describe("Concrete problems, one line each; empty if none"),
 });
 
-async function runScenario(scenario: (typeof tripScenarios)[number]) {
+async function runScenario(
+  { scenario, run }: { scenario: (typeof tripScenarios)[number]; run: number },
+  maxCorrections: number | undefined
+) {
   const started = Date.now();
   try {
-    const state = await tripGraph.invoke({ prompt: scenario.prompt }, { runName: "generate-trip" });
+    const state = await tripGraph.invoke(
+      { prompt: scenario.prompt, maxCorrections },
+      { runName: "generate-trip" }
+    );
     const places = new Map((state.places ?? []).map((place) => [place.id, place]));
     const days = state.itinerary ?? [];
     const activities = days.flatMap((day) => day.activities);
@@ -64,6 +70,7 @@ ${itinerary}
     return {
       ok: true as const,
       scenario: scenario.name,
+      run,
       seconds: Math.round((Date.now() - started) / 1000),
       checks: {
         withPlace: activities.length
@@ -81,24 +88,27 @@ ${itinerary}
       itinerary,
     };
   } catch (error) {
-    return { ok: false as const, scenario: scenario.name, error: String(error) };
+    return { ok: false as const, scenario: scenario.name, run, error: String(error) };
   }
 }
 
-// GET /_nitro/tasks/evals:trips?only=<part of a scenario name>
+// GET /_nitro/tasks/evals:trips?only=<name part>&repeat=<runs>&corrections=<max>
 export default defineTask({
   meta: {
     name: "evals:trips",
     description: "Generates a trip for every scenario, checks it and grades it",
   },
   async run({ payload }) {
-    const only = typeof payload.only === "string" ? payload.only : "";
-    const scenarios = tripScenarios.filter((s) => s.name.includes(only));
-    const results = await inBatches(scenarios, 2, runScenario);
+    const options = evalOptions(payload);
+    const scenarios = tripScenarios.filter((s) => s.name.includes(options.only));
+    const results = await inBatches(repeated(scenarios, options.repeat), 3, (item) =>
+      runScenario(item, options.corrections)
+    );
 
     const done = results.flatMap((r) => (r.ok ? [r] : []));
     const summary = {
-      scenarios: results.length,
+      ...options,
+      runs: results.length,
       errors: results.length - done.length,
       request: average(done.map((r) => r.grade.request)),
       places: average(done.map((r) => r.grade.places)),
@@ -114,6 +124,7 @@ export default defineTask({
     console.table(
       done.map((r) => ({
         scenario: r.scenario,
+        run: r.run,
         request: r.grade.request,
         places: r.grade.places,
         logistics: r.grade.logistics,
