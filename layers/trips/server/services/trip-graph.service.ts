@@ -2,10 +2,22 @@ import { z } from "zod";
 import { END, START, StateGraph, StateSchema } from "@langchain/langgraph";
 import { useChatModel } from "./llm.service";
 import { locateDestination, searchPlaces } from "./places.service";
-import { checkItinerary, repairSchedule } from "./itinerary-checks.service";
+import {
+  checkItinerary,
+  clock,
+  legBetween,
+  legsToRoute,
+  parseDuration,
+  parseTime,
+  repairSchedule,
+  type Legs,
+} from "./itinerary-checks.service";
+import { travelLeg, type Leg } from "./routes.service";
 
 // How many times an itinerary that fails the checks goes back to the AI.
 const MAX_CORRECTIONS = 2;
+// Shorter trips between places don't get a step of their own.
+const MIN_TRAVEL_STEP = 10;
 
 const ActivitySchema = z.object({
   name: z.string().describe("Short description of the activity"),
@@ -61,6 +73,17 @@ const TripState = new StateSchema({
   corrections: z.number().optional(),
   // Set by the evals to compare with fewer corrections.
   maxCorrections: z.number().optional(),
+  // Routed travel between places, kept across corrections (see Legs).
+  legs: z
+    .record(
+      z.string(),
+      z.object({
+        minutes: z.number(),
+        meters: z.number(),
+        mode: z.enum(["drive", "boat", "estimate"]),
+      })
+    )
+    .optional(),
 });
 
 type State = typeof TripState.State;
@@ -226,45 +249,109 @@ function placeShare(itinerary: NonNullable<State["itinerary"]>) {
   return activities.length ? activities.filter((a) => a.placeId).length / activities.length : 0;
 }
 
-// Makes room to travel in the AI's latest itinerary, then keeps it when it is
-// the first one, or has fewer problems than the best so far without losing
-// places: an activity without a place escapes the checks, so dropping places
-// would look like a fix.
-function reviewItinerary(state: State) {
+// Routes the AI's latest itinerary and makes room to travel in it, then keeps
+// it when it is the first one, or has fewer problems than the best so far
+// without losing places: an activity without a place escapes the checks, so
+// dropping places would look like a fix.
+async function reviewItinerary(state: State) {
   const places = new Map((state.places ?? []).map((place) => [place.id, place]));
-  const proposed = repairSchedule(state.proposed ?? [], places);
-  const problems = checkItinerary(proposed, places);
+  const legs: Legs = new Map(Object.entries(state.legs ?? {}));
+  const missing = legsToRoute(state.proposed ?? [], places, legs);
+  await Promise.all(
+    [...missing].map(async ([key, { from, to }]) => {
+      legs.set(key, await travelLeg(from, to));
+    })
+  );
+  const routed = { legs: Object.fromEntries(legs) };
+
+  const proposed = repairSchedule(state.proposed ?? [], places, legs);
+  const problems = checkItinerary(proposed, places, legs);
   if (!state.itinerary) {
-    return { itinerary: proposed, problems, initialProblems: problems.length };
+    return { ...routed, itinerary: proposed, problems, initialProblems: problems.length };
   }
   if (
     problems.length < (state.problems?.length ?? 0) &&
     placeShare(proposed) >= placeShare(state.itinerary)
   ) {
-    return { itinerary: proposed, problems };
+    return { ...routed, itinerary: proposed, problems };
   }
-  return {};
+  return routed;
+}
+
+// "25 min", "1 h 20 min".
+function formatMinutes(minutes: number) {
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours === 0) return `${rest} min`;
+  return rest ? `${hours} h ${rest} min` : `${hours} h`;
+}
+
+function travelNotes(leg: Leg) {
+  if (leg.mode === "drive") return `${formatDistance(leg.meters)} por carretera, según Google Maps.`;
+  if (leg.mode === "boat") {
+    return "Tiempo estimado en lancha: por carretera el camino es mucho más largo.";
+  }
+  return `Unos ${formatDistance(leg.meters)} en línea recta; tiempo estimado.`;
+}
+
+// Each trip between places as a step of its own, so the itinerary shows the
+// road (or the boat) instead of leaving a gap between activities.
+function addTravelSteps(state: State) {
+  const places = new Map((state.places ?? []).map((place) => [place.id, place]));
+  const legs: Legs = new Map(Object.entries(state.legs ?? {}));
+  const itinerary = (state.itinerary ?? []).map(({ day, activities }) => ({
+    day,
+    activities: activities
+      .flatMap((activity, index) => {
+        const previous = activities[index - 1];
+        if (!previous || activity.activityType === "travel" || previous.activityType === "travel") {
+          return [activity];
+        }
+        const leg = legBetween(previous.placeId, activity.placeId, places, legs);
+        const start = parseTime(previous.time);
+        const length = parseDuration(previous.duration);
+        if (!leg || leg.minutes < MIN_TRAVEL_STEP || start === null || length === null) {
+          return [activity];
+        }
+        const place = places.get(activity.placeId!)!;
+        const travel = {
+          name: `${leg.mode === "boat" ? "Lancha" : "Traslado"} a ${place.name}`,
+          location: place.name,
+          activityType: "travel" as const,
+          time: clock(start + length),
+          duration: formatMinutes(leg.minutes),
+          notes: travelNotes(leg),
+          id: 0,
+        };
+        return [travel, activity];
+      })
+      .map((activity, index) => ({ ...activity, id: index + 1 })),
+  }));
+  return { itinerary };
 }
 
 function afterReview(state: State) {
   return state.problems?.length &&
     (state.corrections ?? 0) < (state.maxCorrections ?? MAX_CORRECTIONS)
     ? "generateItinerary"
-    : END;
+    : "addTravelSteps";
 }
 
 // metadata and tags run in parallel; places need both the tags and the
-// destination. An itinerary that fails the checks goes back to the AI.
+// destination. An itinerary that fails the checks goes back to the AI; the
+// one kept gets a step for each trip between places.
 export const tripGraph = new StateGraph(TripState)
   .addNode("generateMetadata", generateMetadata)
   .addNode("generateTags", generateTags)
   .addNode("findPlaces", findPlaces)
   .addNode("generateItinerary", generateItinerary)
   .addNode("checkItinerary", reviewItinerary)
+  .addNode("addTravelSteps", addTravelSteps)
   .addEdge(START, "generateMetadata")
   .addEdge(START, "generateTags")
   .addEdge(["generateMetadata", "generateTags"], "findPlaces")
   .addEdge("findPlaces", "generateItinerary")
   .addEdge("generateItinerary", "checkItinerary")
-  .addConditionalEdges("checkItinerary", afterReview, ["generateItinerary", END])
+  .addConditionalEdges("checkItinerary", afterReview, ["generateItinerary", "addTravelSteps"])
+  .addEdge("addTravelSteps", END)
   .compile();

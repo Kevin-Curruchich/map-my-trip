@@ -1,11 +1,9 @@
+import { estimateLeg, type Leg } from "./routes.service";
+
 // Itineraries in code: times moved so there is room to travel between places,
 // and what is still wrong after that (a place repeated on another day, a day
 // that ends too late) for the AI to fix.
 
-// Roads are about this much longer than a straight line, and this fast on
-// average: a rough lower bound for the time between two places.
-const ROAD_FACTOR = 1.3;
-const ROAD_SPEED_KMH = 40;
 // Moves shorter than this are on foot and fit in any gap.
 const WALKING_DISTANCE = 1500;
 // Moved activities start on a quarter hour, and a day should end by this time.
@@ -28,6 +26,11 @@ export interface ItineraryProblem {
 }
 
 type PlacePoint = { name: string; latitude: number | null; longitude: number | null };
+type Day<A> = { day: number; activities: A[] };
+
+// Travel times between places, from the Routes API, by "<from id>><to id>".
+export type Legs = Map<string, Leg>;
+export const legKey = (from: string, to: string) => `${from}>${to}`;
 
 // "9:00 AM", "2:30 pm" or "14:00" -> minutes after midnight; else null.
 export function parseTime(value: string) {
@@ -49,45 +52,81 @@ export function parseDuration(value: string) {
   return Math.round(Number(hours?.[1] ?? 0) * 60 + Number(minutes?.[1] ?? 0));
 }
 
-function clock(minutes: number) {
+export function clock(minutes: number) {
   const hour = Math.floor(minutes / 60) % 24;
   return `${hour % 12 || 12}:${String(minutes % 60).padStart(2, "0")} ${hour < 12 ? "AM" : "PM"}`;
 }
 
-// Minutes by road between two places; 0 on foot or when either is unknown.
-function travelMinutes(from: PlacePoint | undefined, to: PlacePoint | undefined) {
-  if (from?.latitude == null || from.longitude == null || to?.latitude == null || to.longitude == null) {
-    return 0;
+function located(placeId: string | undefined, places: Map<string, PlacePoint>) {
+  const place = placeId ? places.get(placeId) : undefined;
+  return place?.latitude != null && place.longitude != null
+    ? { ...place, latitude: place.latitude, longitude: place.longitude }
+    : null;
+}
+
+// The way from one place to the next: the routed leg when there is one, an
+// estimate otherwise, or null on foot or when either place is unknown.
+export function legBetween(
+  fromId: string | undefined,
+  toId: string | undefined,
+  places: Map<string, PlacePoint>,
+  legs: Legs
+): Leg | null {
+  const from = located(fromId, places);
+  const to = located(toId, places);
+  if (!from || !to || distanceInMeters(from, to) < WALKING_DISTANCE) return null;
+  return legs.get(legKey(fromId!, toId!)) ?? estimateLeg(from, to);
+}
+
+// Consecutive places of the itinerary that need a route and have none yet,
+// except into a travel activity the AI wrote itself (a boat, a shuttle).
+export function legsToRoute(
+  days: Day<ItineraryActivity>[],
+  places: Map<string, PlacePoint>,
+  legs: Legs
+) {
+  const missing = new Map<string, { from: PlacePoint & { latitude: number; longitude: number }; to: PlacePoint & { latitude: number; longitude: number } }>();
+  for (const { activities } of days) {
+    activities.forEach((activity, index) => {
+      const previous = activities[index - 1];
+      if (!previous?.placeId || !activity.placeId || activity.activityType === "travel") return;
+      const key = legKey(previous.placeId, activity.placeId);
+      const from = located(previous.placeId, places);
+      const to = located(activity.placeId, places);
+      if (legs.has(key) || !from || !to || distanceInMeters(from, to) < WALKING_DISTANCE) return;
+      missing.set(key, { from, to });
+    });
   }
-  const distance = distanceInMeters(
-    { latitude: from.latitude, longitude: from.longitude },
-    { latitude: to.latitude, longitude: to.longitude }
-  );
-  if (distance < WALKING_DISTANCE) return 0;
-  return Math.round(((distance / 1000) * ROAD_FACTOR * 60) / ROAD_SPEED_KMH);
+  return missing;
+}
+
+function describeLeg(leg: Leg) {
+  return leg.mode === "boat" ? `about ${leg.minutes} min by boat` : `about ${leg.minutes} min by road`;
 }
 
 // Moves activities later so each one starts after the one before has ended,
 // with time to get there. The AI tends to leave no room for the road, and
 // asking it again rarely fixes that; the order and durations stay as it wrote.
 export function repairSchedule<A extends ItineraryActivity>(
-  days: { day: number; activities: A[] }[],
-  places: Map<string, PlacePoint>
+  days: Day<A>[],
+  places: Map<string, PlacePoint>,
+  legs: Legs
 ) {
   return days.map(({ day, activities }) => {
     let previousEnd: number | null = null;
-    let previousPlace: PlacePoint | undefined;
+    let previousPlaceId: string | undefined;
     return {
       day,
       activities: activities.map((activity) => {
-        const place = activity.placeId ? places.get(activity.placeId) : undefined;
         let start = parseTime(activity.time);
         const length = parseDuration(activity.duration);
         let moved = activity;
         if (start !== null && previousEnd !== null) {
           // A travel activity is the road itself: it starts when the last ends.
           const travel =
-            activity.activityType === "travel" ? 0 : travelMinutes(previousPlace, place);
+            activity.activityType === "travel"
+              ? 0
+              : (legBetween(previousPlaceId, activity.placeId, places, legs)?.minutes ?? 0);
           const earliest = previousEnd + travel;
           if (start < earliest) {
             start = Math.ceil(earliest / TIME_STEP) * TIME_STEP;
@@ -96,7 +135,7 @@ export function repairSchedule<A extends ItineraryActivity>(
         }
         // Past an activity without a usable time or duration nothing is known.
         previousEnd = start !== null && length !== null ? start + length : null;
-        previousPlace = place;
+        previousPlaceId = activity.placeId;
         return moved;
       }),
     };
@@ -104,8 +143,9 @@ export function repairSchedule<A extends ItineraryActivity>(
 }
 
 export function checkItinerary(
-  days: { day: number; activities: ItineraryActivity[] }[],
-  places: Map<string, PlacePoint>
+  days: Day<ItineraryActivity>[],
+  places: Map<string, PlacePoint>,
+  legs: Legs
 ): ItineraryProblem[] {
   const problems: ItineraryProblem[] = [];
   const seen = new Map<string, number>();
@@ -154,38 +194,27 @@ export function checkItinerary(
         return;
       }
 
-      const before = previous.placeId ? places.get(previous.placeId) : undefined;
-      if (
-        before?.latitude == null ||
-        before.longitude == null ||
-        place?.latitude == null ||
-        place.longitude == null
-      ) {
-        return;
-      }
-      const distance = distanceInMeters(
-        { latitude: before.latitude, longitude: before.longitude },
-        { latitude: place.latitude, longitude: place.longitude }
-      );
-      if (distance < WALKING_DISTANCE) return;
-      const travel = Math.round(((distance / 1000) * ROAD_FACTOR * 60) / ROAD_SPEED_KMH);
+      const leg = legBetween(previous.placeId, activity.placeId, places, legs);
+      if (!leg) return;
+      const before = places.get(previous.placeId!)!;
+      const way = `${before.name} and ${place!.name} are ${formatDistance(leg.meters)} apart (${describeLeg(leg)})`;
       // A travel activity is the trip itself: its duration has to cover it.
       if (activity.activityType === "travel") {
         const length = parseDuration(activity.duration);
-        if (length !== null && start - previousEnd + length < travel) {
+        if (length !== null && start - previousEnd + length < leg.minutes) {
           problems.push({
             kind: "travel",
             day,
-            message: `Day ${day}: "${activity.name}" takes ${activity.duration}, but ${before.name} and ${place.name} are ${formatDistance(distance)} apart (about ${travel} min by road).`,
+            message: `Day ${day}: "${activity.name}" takes ${activity.duration}, but ${way}.`,
           });
         }
         return;
       }
-      if (start - previousEnd < travel) {
+      if (start - previousEnd < leg.minutes) {
         problems.push({
           kind: "travel",
           day,
-          message: `Day ${day}: ${before.name} and ${place.name} are ${formatDistance(distance)} apart (about ${travel} min by road), but "${activity.name}" starts ${start - previousEnd} min after "${previous.name}" ends.`,
+          message: `Day ${day}: ${way}, but "${activity.name}" starts ${start - previousEnd} min after "${previous.name}" ends.`,
         });
       }
     });

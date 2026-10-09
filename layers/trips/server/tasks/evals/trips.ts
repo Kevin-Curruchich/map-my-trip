@@ -30,7 +30,10 @@ async function runScenario(
     );
     const places = new Map((state.places ?? []).map((place) => [place.id, place]));
     const days = state.itinerary ?? [];
-    const activities = days.flatMap((day) => day.activities);
+    // Travel steps never have a place of their own.
+    const activities = days
+      .flatMap((day) => day.activities)
+      .filter((a) => a.activityType !== "travel");
 
     // Longest same-day hop between consecutive activities with a place.
     const hops = days.flatMap((day) => {
@@ -47,7 +50,11 @@ async function runScenario(
       .map(
         (day) =>
           `Day ${day.day}\n${day.activities
-            .map((a) => `  ${a.time} ${a.name} — ${a.placeId ? (places.get(a.placeId)?.name ?? "?") : "no place"} (${a.duration})`)
+            .map((a) =>
+              a.activityType === "travel"
+                ? `  ${a.time} ${a.name} (${a.duration}; ${a.notes})`
+                : `  ${a.time} ${a.name} — ${a.placeId ? (places.get(a.placeId)?.name ?? "?") : "no place"} (${a.duration})`
+            )
             .join("\n")}`
       )
       .join("\n");
