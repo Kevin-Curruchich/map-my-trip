@@ -1,5 +1,5 @@
-// The creator's token for each event they made in this browser. It is what
-// lets them generate proposals and close the vote without an account.
+// The creator's token for each event they made in this browser. It proves
+// they created it (to close the vote, and with an account, to use the AI).
 export default function useEventOwner() {
   function storageKey(slug: string) {
     return `mapmytrip:owner:${slug}`;
