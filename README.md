@@ -50,7 +50,7 @@ Development uses its own Postgres from `docker-compose.yml`, never the productio
 `.env.example` already points `NUXT_DATABASE_URL` at it:
 
 ```bash
-NUXT_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/mapmytrip
+NUXT_DATABASE_URL=postgresql://postgres@localhost:5432/mapmytrip
 ```
 
 The data lives in a Docker volume and survives `pnpm db:down`. Use `pnpm db:reset` to start from an empty database.
