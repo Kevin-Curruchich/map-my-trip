@@ -4,6 +4,7 @@ import { CloseEventBodySchema, EventSlugParamsSchema } from "../../../schemas";
 // The creator ends the vote. The winner is the most voted proposal (the first
 // one listed on a tie) unless they pick one.
 export default defineEventHandler(async (event) => {
+  await requireUserSession(event);
   const { slug } = await getValidatedRouterParams(
     event,
     EventSlugParamsSchema.parse

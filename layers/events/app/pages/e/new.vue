@@ -2,6 +2,7 @@
 import {
   type CalendarDate,
   getLocalTimeZone,
+  parseDate,
   today,
 } from "@internationalized/date";
 import type { EventLocation } from "~~/layers/events/app/composables/useEventLocation";
@@ -25,7 +26,7 @@ const toast = useToast();
 
 const { suggestions, isSearching, isLocating, search, resolve, locate } =
   useEventLocation();
-const { saveOwnerToken } = useEventOwner();
+const { loggedIn } = useUserSession();
 
 interface LocationItem {
   label: string;
@@ -104,24 +105,84 @@ function validate() {
   return !errors.title && !errors.location;
 }
 
+interface EventDraft {
+  title: string;
+  location: EventLocation;
+  date?: string;
+  description?: string;
+}
+
+// Creating a plan needs an account. Signing in leaves the page, so the filled
+// form is kept in this tab and the plan is created as soon as they're back.
+const DRAFT_KEY = "mapmytrip:event-draft";
+const loginPromptOpen = ref(false);
+let pendingDraft: EventDraft | undefined;
+
+function saveDraft() {
+  if (!pendingDraft) return;
+  try {
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(pendingDraft));
+  } catch {
+    // Without storage they just fill the form again after signing in.
+  }
+}
+
+function takeDraft(): EventDraft | undefined {
+  try {
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    sessionStorage.removeItem(DRAFT_KEY);
+    return raw ? (JSON.parse(raw) as EventDraft) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function fillForm(draft: EventDraft) {
+  title.value = draft.title;
+  description.value = draft.description ?? "";
+  location.value = draft.location;
+  locationSearch.value = draft.location.label;
+  pickedLabel = draft.location.label;
+  date.value = draft.date ? parseDate(draft.date) : undefined;
+}
+
+onMounted(() => {
+  const draft = takeDraft();
+  if (!draft) return;
+  fillForm(draft);
+  if (loggedIn.value) createEvent(draft);
+});
+
 async function onSubmit() {
   if (!validate()) return;
 
+  await resolving;
+  const draft: EventDraft = {
+    title: title.value,
+    location: location.value!,
+    date: date.value?.toString(),
+    description: description.value || undefined,
+  };
+  if (!loggedIn.value) {
+    pendingDraft = draft;
+    loginPromptOpen.value = true;
+    return;
+  }
+  await createEvent(draft);
+}
+
+async function createEvent(draft: EventDraft) {
   isLoading.value = true;
   try {
-    await resolving;
-    const { slug, ownerToken } = await $fetch("/api/events", {
-      method: "POST",
-      body: {
-        title: title.value,
-        location: location.value!,
-        date: date.value?.toString(),
-        description: description.value || undefined,
-      },
-    });
-    if (ownerToken) saveOwnerToken(slug, ownerToken);
+    const { slug } = await $fetch("/api/events", { method: "POST", body: draft });
     await navigateTo(`/e/${slug}`);
   } catch (error) {
+    // The session can expire between loading the page and submitting.
+    if ((error as { statusCode?: number }).statusCode === 401) {
+      pendingDraft = draft;
+      loginPromptOpen.value = true;
+      return;
+    }
     console.error("Error creating event:", error);
     toast.add({
       title: "No pudimos crear el evento",
@@ -210,6 +271,18 @@ async function onSubmit() {
       <UButton type="submit" size="lg" block :loading="isLoading">
         Crear y compartir
       </UButton>
+      <p v-if="!loggedIn" class="text-center text-xs text-dimmed">
+        Te pediremos entrar con Google para crear el plan. Tus amigos no
+        necesitan cuenta.
+      </p>
     </form>
+
+    <LoginPrompt
+      v-model:open="loginPromptOpen"
+      title="Inicia sesión para crear el plan"
+      description="El plan queda en tu cuenta para que puedas usar la IA y cerrar la votación. Lo que llenaste se guarda y el plan se crea al volver."
+      redirect="/e/new"
+      @sign-in="saveDraft"
+    />
   </UContainer>
 </template>

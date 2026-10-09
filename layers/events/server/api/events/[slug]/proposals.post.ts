@@ -1,4 +1,4 @@
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { EventSlugParamsSchema } from "../../../schemas";
 import { generateProposals } from "../../../services/proposals.service";
 
@@ -6,7 +6,7 @@ import { generateProposals } from "../../../services/proposals.service";
 // the votes, so it also works after more people join. Using the AI requires
 // a Google account so every generation is tied to someone.
 export default defineEventHandler(async (event) => {
-  const { user } = await requireUserSession(event);
+  await requireUserSession(event);
   const { slug } = await getValidatedRouterParams(
     event,
     EventSlugParamsSchema.parse
@@ -21,13 +21,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "Event not found" });
   }
   await requireEventOwner(event, found);
-  // The owner token alone isn't enough once the plan belongs to an account.
-  if (found.ownerSub && found.ownerSub !== user.sub) {
-    throw createError({
-      statusCode: 403,
-      statusMessage: "Only the event creator can do this",
-    });
-  }
   if (found.status === "closed") {
     throw createError({ statusCode: 409, statusMessage: "Event is closed" });
   }
@@ -47,23 +40,6 @@ export default defineEventHandler(async (event) => {
       statusCode: 409,
       statusMessage: "Nobody has joined yet",
     });
-  }
-
-  // Plans created signed out are claimed by the account that first uses the
-  // AI on them, so they show up in "Mis planes".
-  if (!found.ownerSub) {
-    const claimed = await db
-      .update(tables.events)
-      .set({ ownerSub: user.sub })
-      .where(and(eq(tables.events.id, found.id), isNull(tables.events.ownerSub)))
-      .returning({ id: tables.events.id });
-    // Another account claimed it between our read and this update.
-    if (claimed.length === 0) {
-      throw createError({
-        statusCode: 403,
-        statusMessage: "Only the event creator can do this",
-      });
-    }
   }
 
   // Provider errors carry their own status (e.g. 401 for a bad API key),

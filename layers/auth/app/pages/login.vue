@@ -31,7 +31,7 @@ if (loggedIn.value) {
             Entra para continuar
           </h1>
           <p class="mt-2 text-muted">
-            Entra para usar la IA y guardar tus planes.
+            Entra para crear planes y usar la IA.
           </p>
         </div>
       </template>
