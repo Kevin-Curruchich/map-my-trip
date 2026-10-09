@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.2.0](https://github.com/Kevin-Curruchich/map-my-trip/compare/v0.1.0...v0.2.0) (2026-10-09)
+
+
+### Features
+
+* **auth:** return to the original page after Google sign-in ([08a5109](https://github.com/Kevin-Curruchich/map-my-trip/commit/08a510970d0162daa1c3b6b97ade4a17601d754f))
+* **base:** add MapMyTrip logo, favicon and app icons ([cd542be](https://github.com/Kevin-Curruchich/map-my-trip/commit/cd542bed5bf11f9235bfb8c7e3735ea99d0d7ddc))
+* **base:** brand theme with mango and green palette and Manrope ([f1b491a](https://github.com/Kevin-Curruchich/map-my-trip/commit/f1b491a0f0572787f5bf4a5d96f6776e37d74f6a))
+* **base:** smiling logo mark for better contrast ([b54a53e](https://github.com/Kevin-Curruchich/map-my-trip/commit/b54a53e80c5b957b3249ca51eb549a59a8ab647a))
+* **base:** Spanish header with new logo and landing anchors ([c22fbd5](https://github.com/Kevin-Curruchich/map-my-trip/commit/c22fbd52fb85e78e5c6392e5f2646d77a9977d0b))
+* **events:** ask the creator to sign in before using the AI ([42a2447](https://github.com/Kevin-Curruchich/map-my-trip/commit/42a24477c80397ad70a9bd084f3a2e6aacf7c371))
+* **events:** rebrand the WhatsApp link preview ([672c95c](https://github.com/Kevin-Curruchich/map-my-trip/commit/672c95c6ff91a0cbf16aaf69aed66552e9b25949))
+* **events:** require sign-in to generate AI proposals and claim the plan ([c134a5f](https://github.com/Kevin-Curruchich/map-my-trip/commit/c134a5f48513177a581bb25683b4063a5429a51a))
+* **marketing:** full Spanish landing with features, trips, FAQ and share image ([ce18a34](https://github.com/Kevin-Curruchich/map-my-trip/commit/ce18a34aa18bc4c62be8437f684f651aaaad6ee9))
+* **marketing:** group-plan hero with a voting demo ([9b82fac](https://github.com/Kevin-Curruchich/map-my-trip/commit/9b82fac2c8c6b06fb68a99c05d7234b98b8c4059))
+
+
+### Bug Fixes
+
+* **base:** readable contrast for brand-colored text across the app ([36ef168](https://github.com/Kevin-Curruchich/map-my-trip/commit/36ef168d13b1d1852f1f1aad3a5c5a302177bcfe))
+* **events:** stop a second account from claiming a plan at the same time ([3104d26](https://github.com/Kevin-Curruchich/map-my-trip/commit/3104d26a970039c773335b7ffdec29ada27960f7))
+
 ## 0.1.0 (2026-10-07)
 
 
