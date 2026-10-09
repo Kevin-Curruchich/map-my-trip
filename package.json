@@ -12,7 +12,10 @@
     "lint": "eslint . --fix",
     "typecheck": "nuxt typecheck",
     "prepare": "husky",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "db:up": "docker compose up -d --wait db",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && docker compose up -d --wait db"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.1.3",

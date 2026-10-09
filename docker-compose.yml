@@ -1,0 +1,23 @@
+# Local Postgres for development, so `pnpm dev` never touches the production
+# database. Migrations run on server start against NUXT_DATABASE_URL.
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: mapmytrip
+      # No password: the port is only published on this machine (127.0.0.1),
+      # so nothing else on the network can reach it.
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d mapmytrip"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  db-data:
