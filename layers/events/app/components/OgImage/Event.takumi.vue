@@ -43,20 +43,27 @@ const peopleLabel =
 
 <template>
   <div
-    class="w-full h-full flex flex-col justify-between p-16"
-    style="background-image: linear-gradient(135deg, #10b981 0%, #a3e635 100%)"
+    class="og-root w-full h-full flex flex-col justify-between p-16"
+    style="background-color: #FFA51F; color: #1C1917"
   >
     <div class="flex items-center justify-between">
       <div class="flex items-center">
-        <div
-          class="w-14 h-14 rounded-2xl bg-black text-white flex items-center justify-center text-3xl font-black"
-        >
-          M
-        </div>
-        <span class="ml-4 text-3xl font-bold text-black">MapMyTrip</span>
+        <svg width="64" height="64" viewBox="0 0 64 64">
+          <path
+            d="M14 6h36a10 10 0 0 1 10 10v22a10 10 0 0 1-10 10H41l-9 12-9-12h-9A10 10 0 0 1 4 38V16A10 10 0 0 1 14 6z"
+            fill="#1C1917"
+          />
+          <circle cx="19" cy="27" r="4.5" fill="#FFA51F" />
+          <circle cx="32" cy="27" r="4.5" fill="#12A150" />
+          <circle cx="45" cy="27" r="4.5" fill="#FFA51F" />
+        </svg>
+        <span class="ml-4 text-4xl font-extrabold" style="letter-spacing: -0.03em">
+          MapMyTrip
+        </span>
       </div>
       <span
-        class="px-6 py-2 rounded-full bg-black/85 text-white text-2xl font-semibold"
+        class="px-6 py-2 rounded-full text-2xl font-bold"
+        style="background-color: #1C1917; color: #FFFFFF"
       >
         Plan en grupo
       </span>
@@ -64,17 +71,21 @@ const peopleLabel =
 
     <div v-if="event" class="flex flex-col">
       <h1
-        class="leading-tight font-black text-black"
+        class="leading-tight font-extrabold"
         :class="titleSize"
-        style="line-clamp: 2"
+        style="line-clamp: 2; letter-spacing: -0.03em"
       >
         {{ title }}
       </h1>
-      <p class="mt-6 text-4xl font-semibold text-black/80" style="line-clamp: 1">
+      <p class="mt-6 text-4xl font-bold" style="line-clamp: 1; color: #2B1A00; opacity: 0.8">
         {{ truncate(whereWhen, 60) }}
       </p>
     </div>
-    <h1 v-else class="text-[84px] leading-none font-black text-black">
+    <h1
+      v-else
+      class="text-[84px] leading-none font-extrabold"
+      style="letter-spacing: -0.03em"
+    >
       Decidan juntos qué hacer
     </h1>
 
@@ -82,12 +93,19 @@ const peopleLabel =
       v-if="event"
       class="flex items-center justify-between rounded-3xl bg-white px-10 py-6"
     >
-      <span class="text-3xl font-bold text-black" style="line-clamp: 1">
+      <span class="text-3xl font-extrabold" style="line-clamp: 1">
         {{ footer }}
       </span>
-      <span class="ml-6 shrink-0 whitespace-nowrap text-3xl text-black/60">
+      <span class="ml-6 shrink-0 whitespace-nowrap text-3xl font-medium" style="color: #57534E">
         {{ peopleLabel }}
       </span>
     </div>
   </div>
 </template>
+
+<style>
+/* nuxt-og-image reads the font family from the SFC style block. */
+.og-root {
+  font-family: "Manrope", sans-serif;
+}
+</style>

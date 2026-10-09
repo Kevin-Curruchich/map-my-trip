@@ -1,6 +1,12 @@
 export default defineNuxtConfig({
   modules: ["@nuxt/ui"],
   css: ["#layers/base/app/assets/css/main.css"],
+  // Global so nuxt-og-image can also render share images in Manrope.
+  fonts: {
+    families: [
+      { name: "Manrope", provider: "google", weights: [400, 500, 700, 800], global: true },
+    ],
+  },
   app: {
     head: {
       htmlAttrs: { lang: "es" },

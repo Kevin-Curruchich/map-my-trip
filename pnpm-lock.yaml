@@ -23,6 +23,9 @@ importers:
       '@langchain/openai':
         specifier: ^1.6.2
         version: 1.6.2(@langchain/core@1.2.16(@opentelemetry/api@1.9.0)(openai@7.28.0(undici@8.11.2)(ws@8.22.0)(zod@4.6.5))(ws@8.22.0))(undici@8.11.2)(ws@8.22.0)
+      '@nuxt/fonts':
+        specifier: ^0.14.0
+        version: 0.14.0(db0@0.3.4(drizzle-orm@0.45.3(@opentelemetry/api@1.9.0)(postgres@3.4.9)))(esbuild@0.28.2)(ioredis@5.11.1)(magic-string@1.4.3)(magicast@0.5.5)(oxc-parser@0.151.0)(rolldown@1.2.12)(rollup@4.64.0)(vite@8.3.3(@types/node@26.6.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.0)(tsx@4.23.15)(yaml@2.9.1))
       '@nuxt/ui':
         specifier: ^4.11.3
         version: 4.11.3(0a7fb02c5c203d165300eb939255929f)
