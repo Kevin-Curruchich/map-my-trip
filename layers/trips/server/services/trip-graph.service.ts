@@ -74,6 +74,9 @@ const TripState = new StateSchema({
   // Set by the evals to compare with fewer corrections or another model.
   maxCorrections: z.number().optional(),
   plannerModel: z.string().optional(),
+  // Set to false by the evals to measure the itinerary without them.
+  repairTimes: z.boolean().optional(),
+  routeLegs: z.boolean().optional(),
   // Routed travel between places, kept across corrections (see Legs).
   legs: z
     .record(
@@ -257,7 +260,8 @@ function placeShare(itinerary: NonNullable<State["itinerary"]>) {
 async function reviewItinerary(state: State) {
   const places = new Map((state.places ?? []).map((place) => [place.id, place]));
   const legs: Legs = new Map(Object.entries(state.legs ?? {}));
-  const missing = legsToRoute(state.proposed ?? [], places, legs);
+  const missing =
+    state.routeLegs === false ? new Map() : legsToRoute(state.proposed ?? [], places, legs);
   await Promise.all(
     [...missing].map(async ([key, { from, to }]) => {
       legs.set(key, await travelLeg(from, to));
@@ -265,7 +269,10 @@ async function reviewItinerary(state: State) {
   );
   const routed = { legs: Object.fromEntries(legs) };
 
-  const proposed = repairSchedule(state.proposed ?? [], places, legs);
+  const proposed =
+    state.repairTimes === false
+      ? (state.proposed ?? [])
+      : repairSchedule(state.proposed ?? [], places, legs);
   const problems = checkItinerary(proposed, places, legs);
   if (!state.itinerary) {
     return { ...routed, itinerary: proposed, problems, initialProblems: problems.length };
@@ -298,6 +305,7 @@ function travelNotes(leg: Leg) {
 // Each trip between places as a step of its own, so the itinerary shows the
 // road (or the boat) instead of leaving a gap between activities.
 function addTravelSteps(state: State) {
+  if (state.routeLegs === false) return {};
   const places = new Map((state.places ?? []).map((place) => [place.id, place]));
   const legs: Legs = new Map(Object.entries(state.legs ?? {}));
   const itinerary = (state.itinerary ?? []).map(({ day, activities }) => ({

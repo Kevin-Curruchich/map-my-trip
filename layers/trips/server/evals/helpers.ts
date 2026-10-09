@@ -16,7 +16,7 @@ export async function inBatches<T, R>(
 
 // Query options shared by the eval tasks:
 // ?only=<part of a scenario name>&repeat=<runs per scenario>&corrections=<max>
-// &planner=<OpenAI model that writes the itinerary>
+// &planner=<OpenAI model that writes the itinerary>&repair=0&routes=0
 export function evalOptions(payload: Record<string, unknown>) {
   const only = typeof payload.only === "string" ? payload.only : "";
   const repeat = Math.max(1, Math.min(5, Number(payload.repeat) || 1));
@@ -24,7 +24,11 @@ export function evalOptions(payload: Record<string, unknown>) {
   const corrections =
     payload.corrections === undefined ? undefined : Math.max(0, Number(payload.corrections) || 0);
   const planner = typeof payload.planner === "string" ? payload.planner : undefined;
-  return { only, repeat, corrections, planner };
+  // Trips only: 0 turns off moving times in code, or the Routes API and the
+  // travel steps.
+  const repair = payload.repair !== "0";
+  const routes = payload.routes !== "0";
+  return { only, repeat, corrections, planner, repair, routes };
 }
 
 // Every scenario `repeat` times: one run says little when the model varies.
