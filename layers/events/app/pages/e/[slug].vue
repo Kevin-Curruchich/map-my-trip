@@ -125,8 +125,19 @@ async function generateProposals() {
     await refresh();
   } catch (generateError) {
     // The session can expire while the page is open.
-    if ((generateError as { statusCode?: number }).statusCode === 401) {
+    const statusCode = (generateError as { statusCode?: number }).statusCode;
+    if (statusCode === 401) {
       loginPromptOpen.value = true;
+      return;
+    }
+    // The browser still has the creator's token, but the plan is tied to a
+    // different Google account than the one signed in; retrying won't help.
+    if (statusCode === 403) {
+      toast.add({
+        title: "Este plan está ligado a otra cuenta de Google",
+        description: "Entra con la cuenta con la que usaste la IA en este plan.",
+        color: "warning",
+      });
       return;
     }
     console.error("Error generating proposals:", generateError);
