@@ -6,6 +6,7 @@ const activityIcons: Record<ActivityType, string> = {
   relax: "i-lucide-waves",
   explore: "i-lucide-compass",
   learn: "i-lucide-building",
+  travel: "i-lucide-bus",
 };
 
 export const getActivityIcon = (type: ActivityType) =>

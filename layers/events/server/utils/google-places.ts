@@ -52,7 +52,83 @@ function boxAround(center: { latitude: number; longitude: number }, radius: numb
   };
 }
 
-type AddressComponents = { shortText?: string; types?: string[] }[];
+// Straight-line distance, enough to compare places a few kilometres apart.
+export function distanceInMeters(
+  a: { latitude: number; longitude: number },
+  b: { latitude: number; longitude: number }
+) {
+  const toRad = (degrees: number) => (degrees * Math.PI) / 180;
+  const dLat = toRad(b.latitude - a.latitude);
+  const dLng = toRad(b.longitude - a.longitude);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a.latitude)) * Math.cos(toRad(b.latitude)) * Math.sin(dLng / 2) ** 2;
+  return 2 * 6_371_000 * Math.asin(Math.sqrt(h));
+}
+
+// "1.2 km" or "350 m", for prompts.
+export function formatDistance(meters: number) {
+  return meters < 1000 ? `${Math.round(meters / 10) * 10} m` : `${(meters / 1000).toFixed(1)} km`;
+}
+
+// Google leaves zero values out of the JSON: a missing day is Sunday and a
+// missing hour or minute is 0.
+interface TimePoint {
+  day?: number;
+  hour?: number;
+  minute?: number;
+}
+
+export interface OpeningHours {
+  periods?: { open: TimePoint; close?: TimePoint }[];
+}
+
+function clock(point: TimePoint) {
+  return `${String(point.hour ?? 0).padStart(2, "0")}:${String(point.minute ?? 0).padStart(2, "0")}`;
+}
+
+// A place's hours on one weekday (0 = Sunday, as Google counts), e.g.
+// "12:00–15:00 y 18:00–22:00", or null when Google has none.
+export function hoursOn(hours: OpeningHours, weekday: number) {
+  const periods = hours.periods ?? [];
+  if (periods.length === 0) return null;
+  // Open around the clock: a single period that never closes.
+  if (periods.length === 1 && !periods[0]!.close) return "abierto 24 horas";
+
+  const opens = periods.filter((period) => (period.open.day ?? 0) === weekday);
+  if (opens.length === 0) return "cerrado";
+  return opens
+    .map((period) =>
+      period.close ? `${clock(period.open)}–${clock(period.close)}` : `desde ${clock(period.open)}`
+    )
+    .join(" y ");
+}
+
+const MINUTES_PER_WEEK = 7 * 24 * 60;
+
+function minuteOfWeek(point: TimePoint) {
+  return (point.day ?? 0) * 24 * 60 + (point.hour ?? 0) * 60 + (point.minute ?? 0);
+}
+
+// Whether a place is open at `minutes` after midnight of a weekday (values
+// past midnight roll into the next day), or null when Google has no hours.
+export function isOpenAt(hours: OpeningHours, weekday: number, minutes: number) {
+  const periods = hours.periods ?? [];
+  if (periods.length === 0) return null;
+  if (periods.length === 1 && !periods[0]!.close) return true;
+
+  const at = (weekday * 24 * 60 + minutes) % MINUTES_PER_WEEK;
+  return periods.some(({ open, close }) => {
+    if (!close) return false;
+    const start = minuteOfWeek(open);
+    // A period that closes after midnight on Saturday ends in the next week.
+    let end = minuteOfWeek(close);
+    if (end <= start) end += MINUTES_PER_WEEK;
+    return (at >= start && at < end) || (at + MINUTES_PER_WEEK >= start && at + MINUTES_PER_WEEK < end);
+  });
+}
+
+type AddressComponents ={ shortText?: string; types?: string[] }[];
 
 // The Guatemala box also covers border towns of its neighbours.
 function inRegion(addressComponents?: AddressComponents) {
@@ -160,13 +236,14 @@ const PRICE_LEVELS: Record<string, StepPlace["priceLevel"]> = {
 };
 
 // Real places for one step of a plan, e.g. "café de especialidad", ranked by
-// Google and kept within the radius around the event.
+// Google and kept within the radius around the event. Hours ride apart from
+// the place: they help choose it but are not stored with the proposal.
 // https://developers.google.com/maps/documentation/places/web-service/text-search
 export async function searchPlacesNear(
   query: string,
   center: { latitude: number; longitude: number },
   radius: number
-): Promise<StepPlace[]> {
+): Promise<{ place: StepPlace; hours: OpeningHours | null }[]> {
   const response = await placesFetch<{
     places?: {
       id: string;
@@ -179,10 +256,11 @@ export async function searchPlacesNear(
       googleMapsUri?: string;
       businessStatus?: string;
       addressComponents?: AddressComponents;
+      regularOpeningHours?: OpeningHours;
     }[];
   }>(
     "/places:searchText",
-    "places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.priceLevel,places.googleMapsUri,places.businessStatus,places.addressComponents",
+    "places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.priceLevel,places.googleMapsUri,places.businessStatus,places.addressComponents,places.regularOpeningHours",
     {
       method: "POST",
       body: {
@@ -202,21 +280,24 @@ export async function searchPlacesNear(
         inRegion(place.addressComponents)
     )
     .map((place) => ({
-      source: "google" as const,
-      id: place.id,
-      name: place.displayName?.text ?? "",
-      address: place.formattedAddress ?? null,
-      latitude: place.location?.latitude ?? null,
-      longitude: place.location?.longitude ?? null,
-      mapsUrl:
-        place.googleMapsUri ??
-        `https://www.google.com/maps/place/?q=place_id:${place.id}`,
-      rating: place.rating ?? null,
-      ratingCount: place.userRatingCount ?? null,
-      priceLevel: place.priceLevel ? (PRICE_LEVELS[place.priceLevel] ?? null) : null,
-      description: null,
-      instagram: null,
-      partner: false,
+      hours: place.regularOpeningHours ?? null,
+      place: {
+        source: "google" as const,
+        id: place.id,
+        name: place.displayName?.text ?? "",
+        address: place.formattedAddress ?? null,
+        latitude: place.location?.latitude ?? null,
+        longitude: place.location?.longitude ?? null,
+        mapsUrl:
+          place.googleMapsUri ??
+          `https://www.google.com/maps/place/?q=place_id:${place.id}`,
+        rating: place.rating ?? null,
+        ratingCount: place.userRatingCount ?? null,
+        priceLevel: place.priceLevel ? (PRICE_LEVELS[place.priceLevel] ?? null) : null,
+        description: null,
+        instagram: null,
+        partner: false,
+      },
     }));
 }
 
@@ -225,17 +306,18 @@ export async function searchPlacesNear(
 export async function searchPlacesInGuatemala(
   query: string,
   near?: { center: { latitude: number; longitude: number }; radius: number }
-): Promise<PlaceSuggestion[]> {
+): Promise<(PlaceSuggestion & { location: { latitude: number; longitude: number } | null })[]> {
   const response = await placesFetch<{
     places?: {
       id: string;
       displayName?: { text: string };
       formattedAddress?: string;
+      location?: { latitude: number; longitude: number };
       addressComponents?: AddressComponents;
     }[];
   }>(
     "/places:searchText",
-    "places.id,places.displayName,places.formattedAddress,places.addressComponents",
+    "places.id,places.displayName,places.formattedAddress,places.location,places.addressComponents",
     {
       method: "POST",
       body: {
@@ -255,6 +337,7 @@ export async function searchPlacesInGuatemala(
       placeId: place.id,
       name: place.displayName?.text ?? "",
       address: place.formattedAddress ?? "",
+      location: place.location ?? null,
     }));
 }
 

@@ -22,5 +22,8 @@ export async function searchPlaces(query: string, center: Center | null): Promis
     id: place.placeId,
     name: place.name,
     address: place.address,
+    latitude: place.location?.latitude ?? null,
+    longitude: place.location?.longitude ?? null,
+    distance: center && place.location ? distanceInMeters(center, place.location) : null,
   }));
 }

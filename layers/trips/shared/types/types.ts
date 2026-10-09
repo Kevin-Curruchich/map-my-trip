@@ -7,6 +7,10 @@ export interface TripPlace {
   id: string;
   name: string;
   address: string;
+  latitude: number | null;
+  longitude: number | null;
+  // Meters from the trip's destination, when it was found.
+  distance: number | null;
 }
 
 export interface Activity {
