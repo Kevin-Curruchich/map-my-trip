@@ -14,8 +14,11 @@ import {
 } from "./itinerary-checks.service";
 import { travelLeg, type Leg } from "./routes.service";
 
-// How many times an itinerary that fails the checks goes back to the AI.
-const MAX_CORRECTIONS = 2;
+// How many times an itinerary that fails the checks goes back to the AI. Off:
+// with gpt-4.1 writing, corrections cost extra calls and didn't raise the
+// judge's grades (logistics 2.94 without, 2.81 with; 8 scenarios x 2). The
+// checks still run for the evals; ?corrections=2 measures them again.
+const MAX_CORRECTIONS = 0;
 // Shorter trips between places don't get a step of their own.
 const MIN_TRAVEL_STEP = 10;
 
