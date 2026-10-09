@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/Kevin-Curruchich/map-my-trip/compare/v0.3.0...v0.3.1) (2026-10-09)
+
+
+### Bug Fixes
+
+* keep place searches in Guatemala and near the event or destination ([4e23a62](https://github.com/Kevin-Curruchich/map-my-trip/commit/4e23a62a8ce375b07bcf75e2c7872ab236fff600))
+
 ## [0.3.0](https://github.com/Kevin-Curruchich/map-my-trip/compare/v0.2.0...v0.3.0) (2026-10-09)
 
 
