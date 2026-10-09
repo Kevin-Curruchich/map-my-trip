@@ -1,30 +1,26 @@
-interface PlacesTextSearchResponse {
-  places?: {
-    id: string;
-    displayName?: { text: string };
-    formattedAddress?: string;
-  }[];
+// A trip can cover several towns, so the area around its destination is wide.
+const TRIP_RADIUS = 40000;
+
+type Center = { latitude: number; longitude: number };
+
+// Where the trip's places are searched: around the destination when it is
+// found in Guatemala, otherwise anywhere in the country.
+export async function locateDestination(destination?: string): Promise<Center | null> {
+  if (!destination) return null;
+  return geocodeLabel(destination).catch((error) => {
+    console.error(`Geocoding "${destination}" failed:`, error);
+    return null;
+  });
 }
 
-// Google Places API (New) text search.
-// https://developers.google.com/maps/documentation/places/web-service/text-search
-export async function searchPlaces(query: string): Promise<TripPlace[]> {
-  const response = await $fetch<PlacesTextSearchResponse>(
-    "https://places.googleapis.com/v1/places:searchText",
-    {
-      method: "POST",
-      headers: {
-        "X-Goog-Api-Key": useRuntimeConfig().googlePlacesApiKey,
-        "X-Goog-FieldMask":
-          "places.id,places.displayName,places.formattedAddress",
-      },
-      body: { textQuery: query },
-    }
+export async function searchPlaces(query: string, center: Center | null): Promise<TripPlace[]> {
+  const places = await searchPlacesInGuatemala(
+    query,
+    center ? { center, radius: TRIP_RADIUS } : undefined
   );
-
-  return (response.places ?? []).map((place) => ({
-    id: place.id,
-    name: place.displayName?.text ?? "",
-    address: place.formattedAddress ?? "",
+  return places.map((place) => ({
+    id: place.placeId,
+    name: place.name,
+    address: place.address,
   }));
 }

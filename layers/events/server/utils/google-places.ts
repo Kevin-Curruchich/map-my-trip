@@ -220,6 +220,44 @@ export async function searchPlacesNear(
     }));
 }
 
+// Places for a free-text query, within the radius around `near` when given
+// and always in Guatemala. Only Pro fields, for callers that need no ratings.
+export async function searchPlacesInGuatemala(
+  query: string,
+  near?: { center: { latitude: number; longitude: number }; radius: number }
+): Promise<PlaceSuggestion[]> {
+  const response = await placesFetch<{
+    places?: {
+      id: string;
+      displayName?: { text: string };
+      formattedAddress?: string;
+      addressComponents?: AddressComponents;
+    }[];
+  }>(
+    "/places:searchText",
+    "places.id,places.displayName,places.formattedAddress,places.addressComponents",
+    {
+      method: "POST",
+      body: {
+        textQuery: query,
+        languageCode: "es",
+        regionCode: REGION,
+        locationRestriction: near
+          ? boxAround(near.center, near.radius)
+          : { rectangle: GUATEMALA },
+      },
+    }
+  );
+
+  return (response.places ?? [])
+    .filter((place) => inRegion(place.addressComponents))
+    .map((place) => ({
+      placeId: place.id,
+      name: place.displayName?.text ?? "",
+      address: place.formattedAddress ?? "",
+    }));
+}
+
 // Coordinates for an event that only has a typed place name, in Guatemala.
 export async function geocodeLabel(label: string) {
   const response = await placesFetch<{
