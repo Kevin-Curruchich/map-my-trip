@@ -1,13 +1,14 @@
-import { customAlphabet, nanoid } from "nanoid";
+import { customAlphabet } from "nanoid";
 import { CreateEventBodySchema } from "../../schemas";
 
 // Short, unambiguous slugs that read well in a WhatsApp message.
 const createSlug = customAlphabet("23456789abcdefghjkmnpqrstuvwxyz", 8);
 
+// Creating a plan needs a Google account: that account is the plan's owner
+// and the only one who can use the AI on it or close the vote.
 export default defineEventHandler(async (event) => {
+  const { user } = await requireUserSession(event);
   const body = await readValidatedBody(event, CreateEventBodySchema.parse);
-  // Signing in is optional; when signed in, the plan shows up in "Mis planes".
-  const { user } = await getUserSession(event);
 
   const [created] = await useDb()
     .insert(tables.events)
@@ -20,13 +21,9 @@ export default defineEventHandler(async (event) => {
       longitude: body.location.longitude ?? null,
       date: body.date ?? null,
       description: body.description || null,
-      ownerSub: user?.sub ?? null,
-      ownerToken: nanoid(32),
+      ownerSub: user.sub,
     })
-    .returning({
-      slug: tables.events.slug,
-      ownerToken: tables.events.ownerToken,
-    });
+    .returning({ slug: tables.events.slug });
 
   return created!;
 });

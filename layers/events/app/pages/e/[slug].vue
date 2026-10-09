@@ -5,24 +5,19 @@ import {
   eventBudgetOptions,
   eventBudgetValues,
 } from "~~/layers/events/shared/constants/event-options.constant";
-import { OWNER_TOKEN_HEADER } from "~~/layers/events/shared/constants/event-owner.constant";
 
 const route = useRoute();
 const slug = route.params.slug as string;
 
-// Both live in this browser only, so they are read after mount and the page
-// refetches with them to learn this person's vote and whether they created it.
+// Lives in this browser only, so it is read after mount and the page refetches
+// with it to learn this person's vote. Whether they created the plan comes
+// from their Google session.
 const { getParticipantId, markJoined } = useJoinedEvents();
-const { getOwnerToken } = useEventOwner();
 const participantId = ref<string | null>(null);
-const ownerToken = ref<string | null>(null);
 
 const { data: event, error, refresh } = await useFetch(`/api/events/${slug}`, {
   query: computed(() =>
     participantId.value ? { participant: participantId.value } : {}
-  ),
-  headers: computed((): Record<string, string> =>
-    ownerToken.value ? { [OWNER_TOKEN_HEADER]: ownerToken.value } : {}
   ),
 });
 
@@ -52,7 +47,6 @@ defineOgImage("Event", { slug });
 let pollTimer: ReturnType<typeof setInterval> | undefined;
 onMounted(() => {
   participantId.value = getParticipantId(slug);
-  ownerToken.value = getOwnerToken(slug);
   pollTimer = setInterval(() => {
     if (!document.hidden && event.value?.status !== "closed") refresh();
   }, 5000);
@@ -76,17 +70,11 @@ const isJoining = ref(false);
 const toast = useToast();
 
 const { loggedIn } = useUserSession();
-const { signInWithGoogle, isRedirecting } = useGoogleLogin();
-// Using the AI needs an account; the button keeps its label and explains why.
+// Owner actions need the session; if it expired while the page was open the
+// server answers 401 and we ask to sign in again.
 const loginPromptOpen = ref(false);
-
-function onProposeClick() {
-  if (!loggedIn.value) {
-    loginPromptOpen.value = true;
-    return;
-  }
-  generateProposals();
-}
+const isUnauthorized = (fetchError: unknown) =>
+  (fetchError as { statusCode?: number }).statusCode === 401;
 
 async function onSubmit(submitEvent: FormSubmitEvent<Schema>) {
   isJoining.value = true;
@@ -110,22 +98,14 @@ async function onSubmit(submitEvent: FormSubmitEvent<Schema>) {
   }
 }
 
-const ownerHeaders = computed((): Record<string, string> =>
-  ownerToken.value ? { [OWNER_TOKEN_HEADER]: ownerToken.value } : {}
-);
-
 const isGenerating = ref(false);
 async function generateProposals() {
   isGenerating.value = true;
   try {
-    await $fetch(`/api/events/${slug}/proposals`, {
-      method: "POST",
-      headers: ownerHeaders.value,
-    });
+    await $fetch(`/api/events/${slug}/proposals`, { method: "POST" });
     await refresh();
   } catch (generateError) {
-    // The session can expire while the page is open.
-    if ((generateError as { statusCode?: number }).statusCode === 401) {
+    if (isUnauthorized(generateError)) {
       loginPromptOpen.value = true;
       return;
     }
@@ -162,13 +142,13 @@ const isClosing = ref(false);
 async function closeVoting() {
   isClosing.value = true;
   try {
-    await $fetch(`/api/events/${slug}/close`, {
-      method: "POST",
-      headers: ownerHeaders.value,
-      body: {},
-    });
+    await $fetch(`/api/events/${slug}/close`, { method: "POST", body: {} });
     await refresh();
   } catch (closeError) {
+    if (isUnauthorized(closeError)) {
+      loginPromptOpen.value = true;
+      return;
+    }
     console.error("Error closing vote:", closeError);
     toast.add({ title: "No pudimos cerrar la votación", color: "error" });
   } finally {
@@ -272,6 +252,15 @@ async function copyLink() {
           Copiar link
         </UButton>
       </div>
+      <p v-if="!loggedIn" class="mt-3 text-sm text-muted">
+        ¿Creaste este plan?
+        <ULink
+          :to="{ path: '/login', query: { redirect: `/e/${slug}` } }"
+          class="font-medium text-mango-800 underline dark:text-mango-400"
+        >
+          Inicia sesión para administrarlo
+        </ULink>
+      </p>
     </section>
 
     <UCard
@@ -362,7 +351,7 @@ async function copyLink() {
           :variant="event.status === 'voting' ? 'outline' : 'solid'"
           :loading="isGenerating"
           :disabled="event.participants.length === 0 || isClosing"
-          @click="onProposeClick"
+          @click="generateProposals"
         >
           {{
             event.status === "voting"
@@ -464,25 +453,11 @@ async function copyLink() {
       </ul>
     </section>
 
-    <UModal
+    <LoginPrompt
       v-model:open="loginPromptOpen"
-      title="Inicia sesión para usar la IA"
-      description="Las propuestas se generan con IA, así que necesitamos saber quién las pide. Tus amigos siguen uniéndose y votando sin cuenta."
-    >
-      <template #footer>
-        <div class="flex w-full justify-end gap-2">
-          <UButton variant="ghost" color="neutral" @click="loginPromptOpen = false">
-            Ahora no
-          </UButton>
-          <UButton
-            icon="i-simple-icons-google"
-            :loading="isRedirecting"
-            @click="signInWithGoogle(`/e/${slug}`)"
-          >
-            Continuar con Google
-          </UButton>
-        </div>
-      </template>
-    </UModal>
+      title="Tu sesión expiró"
+      description="Vuelve a entrar con la cuenta con la que creaste el plan para seguir administrándolo."
+      :redirect="`/e/${slug}`"
+    />
   </UContainer>
 </template>

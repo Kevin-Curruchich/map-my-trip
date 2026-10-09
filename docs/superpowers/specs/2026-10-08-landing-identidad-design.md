@@ -138,24 +138,25 @@ Bloque oscuro (tinta) con el título "El próximo plan del grupo empieza aquí" 
 
 | Acción | ¿Requiere cuenta? |
 |---|---|
-| Crear un plan en grupo | No |
+| **Crear un plan en grupo** | **Sí** (se pide al pulsar "Crear y compartir"; el formulario se conserva y el plan se crea al volver del login) |
 | Unirse a un plan y votar | No |
-| Cerrar la votación | No (solo el creador, como hoy) |
+| Cerrar la votación | Sí (solo la cuenta dueña) |
 | **Proponer planes con IA** (creador) | **Sí** |
 | **Crear un viaje con IA** (`/trips`) | **Sí** (ya es así hoy; se mantiene) |
 
 ### Servidor
 
 - `layers/events/server/api/events/[slug]/proposals.post.ts`: llama a `requireUserSession` antes de cualquier otra cosa (401 sin sesión) y después comprueba que sea el creador, como hoy.
-- **El plan se liga a la cuenta.** Si el creador lo hizo sin sesión (`ownerSub` es null) y prueba que es el dueño con su token, al generar se guarda `ownerSub = user.sub`. Así el consumo queda registrado y el plan aparece en "Mis planes". Si el plan ya tiene `ownerSub`, debe coincidir con la cuenta actual.
+- **El dueño es la cuenta.** `POST /api/events` exige sesión y guarda `ownerSub = user.sub`. Ser dueño se valida siempre contra la base de datos (`ownerSub` igual a la cuenta de la sesión) para proponer, cerrar e `isOwner`; el navegador no guarda ningún token de creador.
 - **Regreso después del login:** antes de ir a `/auth/google` se guarda la ruta de origen (una cookie corta o `?redirect=` validado). `layers/auth/server/routes/auth/google.get.ts` redirige ahí al terminar; sin ruta guardada, va a `/plans`, como hoy.
 - **Validación de la ruta:** se acepta solo una ruta interna que empiece con `/` y no con `//` o `/\`, sin esquema ni host. Cualquier otra cosa cae en `/plans`. La función vive en `layers/auth/shared/utils/` para usarla en cliente y servidor.
 
 ### Cliente
 
-- `/e/[slug]`: el botón conserva el texto **"Proponer planes con IA"** (o "Proponer otros planes"). Si no hay sesión, al pulsarlo se abre un `UModal` que explica que debe iniciar sesión para usar la IA, con el botón "Continuar con Google". Ese botón va directo a Google (sin pasar por `/login`) con regreso a `/e/{slug}`, y al volver el creador pulsa de nuevo y genera. El token de creador sigue en el navegador, así que conserva la propiedad del plan.
+- `/e/[slug]`: los controles de dueño solo aparecen para la cuenta dueña. Sin sesión, debajo de "Compartir en WhatsApp" / "Copiar link" se muestra "¿Creaste este plan? Inicia sesión para administrarlo", con regreso al plan. Si la sesión expira con la página abierta, el 401 abre el aviso de login (componente `LoginPrompt` de la capa `auth`).
+- `/e/new`: el formulario se llena sin sesión. Al pulsar "Crear y compartir" sin sesión se abre `LoginPrompt`; justo antes de ir a Google el borrador se guarda en `sessionStorage`, y al volver el plan se crea automáticamente con esos datos.
 - Middleware `auth` (`layers/auth/app/middleware/auth.ts`): redirige a `/login?redirect=<ruta actual>`.
-- `/login`: en español, con el logo nuevo y el texto "Entra para usar la IA y guardar tus planes". Si ya hay sesión, va a la ruta de `redirect` validada (o a `/plans`).
+- `/login`: en español, con el logo nuevo y el texto "Entra para crear planes y usar la IA". Si ya hay sesión, va a la ruta de `redirect` validada (o a `/plans`).
 
 ## Fuera de alcance
 

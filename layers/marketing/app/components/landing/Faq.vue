@@ -3,7 +3,7 @@ import type { AccordionItem } from "@nuxt/ui";
 
 const items: AccordionItem[] = [
   { label: "¿Mis amigos necesitan cuenta?", content: "No. Se unen y votan desde el link que compartes." },
-  { label: "¿Por qué me pide entrar con Google?", content: "Para usar la IA (proponer planes o crear un viaje) y guardar tus planes en tu cuenta." },
+  { label: "¿Por qué me pide entrar con Google?", content: "Para crear planes y usar la IA (proponer planes o crear un viaje). Así cada plan queda en tu cuenta y solo tú lo administras." },
   { label: "¿Cuánto cuesta?", content: "Puedes empezar gratis." },
   { label: "¿De dónde salen los lugares?", content: "De Google Places y de lugares que recomendamos." },
 ];
