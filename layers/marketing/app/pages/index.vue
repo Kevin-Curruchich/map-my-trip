@@ -1,56 +1,24 @@
+<script setup lang="ts">
+useSeoMeta({
+  title: "MapMyTrip · Decidan juntos qué hacer",
+  description:
+    "Crea un plan, compártelo en WhatsApp y la IA propone opciones con lugares reales. El grupo vota y tú cierras la decisión.",
+  ogTitle: "MapMyTrip · Decidan juntos qué hacer",
+  ogDescription:
+    "Planes en grupo con IA: la IA propone, el grupo vota desde WhatsApp.",
+});
+
+defineOgImage("Landing");
+</script>
+
 <template>
   <div>
     <LandingHero />
-    <!-- Features Section -->
-    <UPageSection
-      id="why-choose-us"
-      title="Why Choose MapMyTrip?"
-      description="Explore the unique features that make travel planning a breeze."
-      :features="[
-        {
-          title: 'Interactive Route Planning',
-          description: 'Visualize and adjust routes directly on the map.',
-          icon: 'i-lucide-map',
-        },
-        {
-          title: 'Personalized Discovery',
-          description: 'Find places tailored to your preferences.',
-          icon: 'i-lucide-search',
-        },
-        {
-          title: 'Itinerary Management',
-          description: 'Organize your trip days and bookings.',
-          icon: 'i-lucide-calendar',
-        },
-      ]"
-    />
-
-    <!-- Call to Action Section -->
-    <UPageCTA
-      title="Ready to Start Your Journey?"
-      description="Sign up today and let us help you create unforgettable travel experiences."
-      :links="[
-        { label: 'Get Started', to: '/login', color: 'primary', size: 'lg' },
-      ]"
-    />
-
-    <!-- Footer -->
-    <UFooter>
-      <template #left>
-        <p class="text-muted text-sm">
-          Copyright © {{ new Date().getFullYear() }}
-        </p>
-      </template>
-      <template #right>
-        <UButton
-          icon="i-simple-icons-github"
-          color="neutral"
-          variant="ghost"
-          to="https://github.com/Kevin-Curruchich/map-my-trip"
-          target="_blank"
-          aria-label="GitHub"
-        />
-      </template>
-    </UFooter>
+    <LandingHowItWorks />
+    <LandingFeatures />
+    <LandingTrips />
+    <LandingFaq />
+    <LandingFinalCta />
+    <LandingFooter />
   </div>
 </template>
