@@ -104,7 +104,31 @@ export function hoursOn(hours: OpeningHours, weekday: number) {
     .join(" y ");
 }
 
-type AddressComponents = { shortText?: string; types?: string[] }[];
+const MINUTES_PER_WEEK = 7 * 24 * 60;
+
+function minuteOfWeek(point: TimePoint) {
+  return (point.day ?? 0) * 24 * 60 + (point.hour ?? 0) * 60 + (point.minute ?? 0);
+}
+
+// Whether a place is open at `minutes` after midnight of a weekday (values
+// past midnight roll into the next day), or null when Google has no hours.
+export function isOpenAt(hours: OpeningHours, weekday: number, minutes: number) {
+  const periods = hours.periods ?? [];
+  if (periods.length === 0) return null;
+  if (periods.length === 1 && !periods[0]!.close) return true;
+
+  const at = (weekday * 24 * 60 + minutes) % MINUTES_PER_WEEK;
+  return periods.some(({ open, close }) => {
+    if (!close) return false;
+    const start = minuteOfWeek(open);
+    // A period that closes after midnight on Saturday ends in the next week.
+    let end = minuteOfWeek(close);
+    if (end <= start) end += MINUTES_PER_WEEK;
+    return (at >= start && at < end) || (at + MINUTES_PER_WEEK >= start && at + MINUTES_PER_WEEK < end);
+  });
+}
+
+type AddressComponents ={ shortText?: string; types?: string[] }[];
 
 // The Guatemala box also covers border towns of its neighbours.
 function inRegion(addressComponents?: AddressComponents) {

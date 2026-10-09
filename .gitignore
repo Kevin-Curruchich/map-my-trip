@@ -24,3 +24,6 @@ logs
 !.env.example
 .superpowers/
 .playwright-mcp/
+
+# Eval reports (pnpm evals)
+.evals/

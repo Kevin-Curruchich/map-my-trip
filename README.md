@@ -66,7 +66,20 @@ pnpm typecheck  # vue-tsc via nuxt typecheck
 pnpm db:up      # start the local Postgres (Docker) and wait until it's ready
 pnpm db:down    # stop it, keeping the data
 pnpm db:reset   # delete the local data and start again empty
+pnpm evals:proposals  # grade event plans (needs `pnpm dev` running)
+pnpm evals:trips      # grade trip itineraries (needs `pnpm dev` running)
 ```
+
+## Evals and tracing
+
+Plans and itineraries are graded against fixed scenarios, so a prompt or model change can be compared with the run before it. They call OpenAI and Google for real: a full run of event plans makes around 70 Places searches plus the OpenAI calls and takes a few minutes, so run it after a change worth measuring, not on every save.
+
+- Scenarios live in `layers/events/server/evals/proposal-scenarios.ts` and `layers/trips/server/evals/trip-scenarios.ts`. When a plan comes out wrong, add its case there.
+- Each run checks in code what can be checked (places closed at their step's time, repeated, too far apart, over budget) and asks a larger model to grade the rest from 1 to 5.
+- `?only=<part of a name>` runs some scenarios: `curl localhost:3000/_nitro/tasks/evals:proposals?only=aniversario`.
+- Every run is saved to `.evals/` (ignored by git) with the plans it graded; the dev server's terminal prints a table.
+
+With `LANGSMITH_TRACING=true` and a key, every generation is one trace in [LangSmith](https://smith.langchain.com): the drafts, the place searches, the picks, the corrections and the judge.
 
 ## Releases
 

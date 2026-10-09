@@ -16,7 +16,7 @@ export async function getTripExamples(lang: string): Promise<TripExample[]> {
 }
 
 export async function generateTrip(prompt: string): Promise<GeneratedTrip> {
-  const state = await tripGraph.invoke({ prompt });
+  const state = await tripGraph.invoke({ prompt }, { runName: "generate-trip" });
 
   return {
     title: state.title ?? "",
