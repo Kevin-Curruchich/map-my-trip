@@ -75,6 +75,19 @@ const state = reactive<Partial<Schema>>({
 const isJoining = ref(false);
 const toast = useToast();
 
+const { loggedIn } = useUserSession();
+const { signInWithGoogle, isRedirecting } = useGoogleLogin();
+// Using the AI needs an account; the button keeps its label and explains why.
+const loginPromptOpen = ref(false);
+
+function onProposeClick() {
+  if (!loggedIn.value) {
+    loginPromptOpen.value = true;
+    return;
+  }
+  generateProposals();
+}
+
 async function onSubmit(submitEvent: FormSubmitEvent<Schema>) {
   isJoining.value = true;
   try {
@@ -111,6 +124,11 @@ async function generateProposals() {
     });
     await refresh();
   } catch (generateError) {
+    // The session can expire while the page is open.
+    if ((generateError as { statusCode?: number }).statusCode === 401) {
+      loginPromptOpen.value = true;
+      return;
+    }
     console.error("Error generating proposals:", generateError);
     toast.add({
       title: "No pudimos proponer planes",
@@ -261,7 +279,7 @@ async function copyLink() {
       class="ring-2 ring-primary"
     >
       <template #header>
-        <p class="text-sm font-medium text-primary">Plan final</p>
+        <p class="text-sm font-medium text-mango-800 dark:text-mango-400">Plan final</p>
         <h2 class="text-xl font-bold">{{ winner.title }}</h2>
       </template>
       <p>{{ winner.description }}</p>
@@ -344,7 +362,7 @@ async function copyLink() {
           :variant="event.status === 'voting' ? 'outline' : 'solid'"
           :loading="isGenerating"
           :disabled="event.participants.length === 0 || isClosing"
-          @click="generateProposals"
+          @click="onProposeClick"
         >
           {{
             event.status === "voting"
@@ -445,5 +463,26 @@ async function copyLink() {
         </li>
       </ul>
     </section>
+
+    <UModal
+      v-model:open="loginPromptOpen"
+      title="Inicia sesión para usar la IA"
+      description="Las propuestas se generan con IA, así que necesitamos saber quién las pide. Tus amigos siguen uniéndose y votando sin cuenta."
+    >
+      <template #footer>
+        <div class="flex w-full justify-end gap-2">
+          <UButton variant="ghost" color="neutral" @click="loginPromptOpen = false">
+            Ahora no
+          </UButton>
+          <UButton
+            icon="i-simple-icons-google"
+            :loading="isRedirecting"
+            @click="signInWithGoogle(`/e/${slug}`)"
+          >
+            Continuar con Google
+          </UButton>
+        </div>
+      </template>
+    </UModal>
   </UContainer>
 </template>
