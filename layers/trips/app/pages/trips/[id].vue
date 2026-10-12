@@ -10,6 +10,25 @@ const toast = useToast();
 const { trip, notFound } = useTrip(() => String(route.params.id));
 const { createTripAndNavigate } = useTrips();
 
+const tripActivities = computed(
+  () => trip.value?.itinerary.flatMap((day) => day.activities) ?? []
+);
+const tripPlaces = computed<PlaceRef[]>(() =>
+  tripActivities.value.flatMap((activity) =>
+    activity.placeId ? [{ source: "google" as const, id: activity.placeId }] : []
+  )
+);
+const { selected, open, close } = useSelectedPlace(tripPlaces);
+const isDesktop = useIsDesktop();
+
+// The activity's place name, shown while the panel loads or if Google fails.
+const selectedFallback = computed(() => {
+  const activity = tripActivities.value.find(
+    (item) => item.placeId === selected.value?.id
+  );
+  return activity ? { name: activity.location || activity.name, address: null } : undefined;
+});
+
 useSeoMeta({
   title: () =>
     trip.value ? `${trip.value.title} - Map My Trip` : "Trip Details - Map My Trip",
@@ -23,6 +42,7 @@ function toTimelineItems(activities: Activity[]): TimelineItem[] {
     title: activity.name,
     description: activity.notes,
     icon: getActivityIcon(activity.activityType),
+    placeId: activity.placeId,
   }));
 }
 
@@ -68,7 +88,7 @@ async function duplicateTrip() {
 </script>
 
 <template>
-  <div class="container mx-auto max-w-4xl px-4 py-8">
+  <div class="container mx-auto max-w-6xl px-4 py-8">
     <UEmpty
       v-if="!trip && notFound"
       icon="i-lucide-map"
@@ -108,38 +128,87 @@ async function duplicateTrip() {
         </div>
       </UCard>
 
-      <ItineraryPlaces :activities="trip.activitiesWithPlaces" class="mb-8" />
+      <div class="grid gap-8 lg:grid-cols-[2fr_3fr] lg:items-start">
+        <UCard class="min-w-0">
+          <template #header>
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-calendar" class="size-5 text-primary" />
+              <h2 class="text-lg font-semibold">Itinerary</h2>
+            </div>
+          </template>
 
-      <UCard>
-        <template #header>
-          <div class="flex items-center gap-2">
-            <UIcon name="i-lucide-calendar" class="size-5 text-primary" />
-            <h2 class="text-lg font-semibold">Itinerary</h2>
+          <div class="space-y-8">
+            <section v-for="day in trip.itinerary" :key="day.day">
+              <div class="mb-4 flex items-center gap-3">
+                <div
+                  class="flex size-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-mango-950"
+                >
+                  {{ day.day }}
+                </div>
+                <h3 class="text-lg font-semibold text-highlighted">
+                  Day {{ day.day }}
+                </h3>
+              </div>
+
+              <UTimeline
+                :items="toTimelineItems(day.activities)"
+                size="sm"
+                color="primary"
+                class="ml-4"
+              >
+                <template #title="{ item }">
+                  <button
+                    v-if="item.placeId"
+                    type="button"
+                    class="cursor-pointer text-left underline-offset-4 hover:underline focus-visible:underline"
+                    :class="{ 'text-primary': item.placeId === selected?.id }"
+                    @click="open({ source: 'google', id: item.placeId })"
+                  >
+                    {{ item.title }}
+                  </button>
+                  <span v-else>{{ item.title }}</span>
+                </template>
+              </UTimeline>
+            </section>
+          </div>
+        </UCard>
+
+        <!-- First on mobile so the map stays above the itinerary, as before. -->
+        <aside
+          class="order-first space-y-4 lg:sticky lg:top-4 lg:order-none lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto"
+        >
+          <ItineraryPlaces
+            :activities="trip.activitiesWithPlaces"
+            :selected-id="selected?.id ?? null"
+            @select="(placeId) => open({ source: 'google', id: placeId })"
+          />
+          <UCard v-if="isDesktop && selected">
+            <PlacePanel
+              :key="selected.id"
+              :place="selected"
+              :fallback="selectedFallback"
+              @close="close"
+            />
+          </UCard>
+        </aside>
+      </div>
+
+      <UDrawer
+        :open="!isDesktop && !!selected"
+        @update:open="(value) => { if (!value) close(); }"
+      >
+        <template #content>
+          <div class="max-h-[85vh] overflow-y-auto p-4">
+            <PlacePanel
+              v-if="selected"
+              :key="selected.id"
+              :place="selected"
+              :fallback="selectedFallback"
+              @close="close"
+            />
           </div>
         </template>
-
-        <div class="space-y-8">
-          <section v-for="day in trip.itinerary" :key="day.day">
-            <div class="mb-4 flex items-center gap-3">
-              <div
-                class="flex size-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-mango-950"
-              >
-                {{ day.day }}
-              </div>
-              <h3 class="text-lg font-semibold text-highlighted">
-                Day {{ day.day }}
-              </h3>
-            </div>
-
-            <UTimeline
-              :items="toTimelineItems(day.activities)"
-              size="sm"
-              color="primary"
-              class="ml-4"
-            />
-          </section>
-        </div>
-      </UCard>
+      </UDrawer>
 
       <div class="mt-8 flex justify-center gap-4">
         <UButton icon="i-lucide-share-2" @click="shareTrip">Share Trip</UButton>
