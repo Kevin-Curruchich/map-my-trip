@@ -3,16 +3,12 @@ import { eventBudgetOptions } from "~~/layers/events/shared/constants/event-opti
 
 defineProps<{
   steps: StoredProposalStep[];
+  selected?: PlaceRef | null;
 }>();
+defineEmits<{ select: [place: PlaceRef] }>();
 
 function priceLabel(level: StepPlace["priceLevel"]) {
   return eventBudgetOptions.find((option) => option.value === level)?.label;
-}
-
-function instagramUrl(handle: string) {
-  return handle.startsWith("http")
-    ? handle
-    : `https://instagram.com/${handle.replace(/^@/, "")}`;
 }
 </script>
 
@@ -37,14 +33,18 @@ function instagramUrl(handle: string) {
 
         <div v-if="step.place" class="rounded-lg border border-default p-3 text-sm">
           <div class="flex flex-wrap items-center gap-2">
-            <ULink
-              :to="step.place.mapsUrl"
-              target="_blank"
-              class="inline-flex items-center gap-1 font-semibold text-highlighted"
+            <button
+              type="button"
+              class="inline-flex cursor-pointer items-center gap-1 text-left font-semibold text-highlighted underline-offset-4 hover:underline focus-visible:underline"
+              :class="{
+                'text-primary':
+                  selected?.source === step.place.source && selected?.id === step.place.id,
+              }"
+              @click="$emit('select', { source: step.place.source, id: step.place.id })"
             >
               <UIcon name="i-lucide-map-pin" class="shrink-0 text-primary" />
               {{ step.place.name }}
-            </ULink>
+            </button>
             <UBadge
               v-if="step.place.partner"
               color="primary"
