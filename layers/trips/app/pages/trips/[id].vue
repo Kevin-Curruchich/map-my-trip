@@ -40,9 +40,12 @@ function toTimelineItems(activities: Activity[]): TimelineItem[] {
   return activities.map((activity) => ({
     date: activity.time,
     title: activity.name,
-    description: activity.notes,
     icon: getActivityIcon(activity.activityType),
     placeId: activity.placeId,
+    // The place card's name; old trips may not have a location.
+    location: activity.location || activity.name,
+    duration: activity.duration,
+    notes: activity.notes,
   }));
 }
 
@@ -156,17 +159,23 @@ async function duplicateTrip() {
                 color="primary"
                 class="ml-4"
               >
-                <template #title="{ item }">
-                  <button
-                    v-if="item.placeId"
-                    type="button"
-                    class="cursor-pointer text-left underline-offset-4 hover:underline focus-visible:underline"
-                    :class="{ 'text-primary': item.placeId === selected?.id }"
-                    @click="open({ source: 'google', id: item.placeId })"
-                  >
-                    {{ item.title }}
-                  </button>
-                  <span v-else>{{ item.title }}</span>
+                <template #description="{ item }">
+                  <div class="space-y-2">
+                    <PlaceCard
+                      v-if="item.placeId"
+                      :name="item.location"
+                      :selected="item.placeId === selected?.id"
+                      @select="open({ source: 'google', id: item.placeId })"
+                    >
+                      <template #meta>
+                        <span v-if="item.duration" class="inline-flex items-center gap-1">
+                          <UIcon name="i-lucide-clock" />
+                          {{ item.duration }}
+                        </span>
+                      </template>
+                    </PlaceCard>
+                    <p v-if="item.notes">{{ item.notes }}</p>
+                  </div>
                 </template>
               </UTimeline>
             </section>
