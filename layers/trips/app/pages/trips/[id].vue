@@ -173,9 +173,10 @@ async function duplicateTrip() {
           </div>
         </UCard>
 
-        <!-- First on mobile so the map stays above the itinerary, as before. -->
+        <!-- First on mobile so the map stays above the itinerary, as before;
+             top-20 keeps it below the sticky app header (61px). -->
         <aside
-          class="order-first space-y-4 lg:sticky lg:top-4 lg:order-none lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto"
+          class="order-first space-y-4 lg:sticky lg:top-20 lg:order-none lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto"
         >
           <ItineraryPlaces
             :activities="trip.activitiesWithPlaces"

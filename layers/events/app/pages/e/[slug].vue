@@ -494,9 +494,10 @@ async function copyLink() {
         />
       </div>
 
+      <!-- Below the sticky app header (61px). -->
       <aside
         v-if="proposalPlaces.length"
-        class="hidden lg:sticky lg:top-4 lg:block lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto"
+        class="hidden lg:sticky lg:top-20 lg:block lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto"
       >
         <UCard v-if="isDesktop && selected">
           <PlacePanel
