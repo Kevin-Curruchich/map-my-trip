@@ -45,6 +45,18 @@ export const PlaceDetailsQuerySchema = z.object({
   session: SessionTokenSchema.optional(),
 });
 
+// A place the panel can open: a Google place id or one of our places.
+export const PlaceInfoQuerySchema = z.discriminatedUnion("source", [
+  z.object({ source: z.literal("google"), id: z.string().regex(/^[\w-]{10,300}$/) }),
+  z.object({ source: z.literal("recommended"), id: z.uuid() }),
+]);
+
+// Photo names come from a Place Details response: places/<id>/photos/<id>.
+export const PlacePhotoQuerySchema = z.object({
+  name: z.string().regex(/^places\/[\w-]{10,300}\/photos\/[\w-]{10,1000}$/),
+  w: z.coerce.number().int().min(200).max(1200).default(800),
+});
+
 export const EventSlugListQuerySchema = z.object({
   slugs: z
     .string()
