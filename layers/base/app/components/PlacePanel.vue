@@ -77,6 +77,7 @@ function photoUrl(photoName: string) {
         v-slot="{ item }"
         :items="photos"
         arrows
+        :ui="{ prev: 'start-2', next: 'end-2' }"
         class="w-full"
       >
         <figure>
@@ -196,7 +197,13 @@ function photoUrl(photoName: string) {
           class="space-y-1 text-sm"
         >
           <div class="flex flex-wrap items-center gap-2">
-            <UAvatar :src="review.authorPhoto ?? undefined" :alt="review.author" size="xs" />
+            <!-- Google's avatar host refuses requests that carry our referrer. -->
+            <UAvatar
+              :src="review.authorPhoto ?? undefined"
+              :alt="review.author"
+              size="xs"
+              referrerpolicy="no-referrer"
+            />
             <ULink
               v-if="review.authorUri"
               :to="review.authorUri"

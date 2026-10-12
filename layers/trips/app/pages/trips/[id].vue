@@ -193,9 +193,10 @@ async function duplicateTrip() {
         </aside>
       </div>
 
+      <!-- It also reports closing when the screen turns desktop; the place stays open there. -->
       <UDrawer
         :open="!isDesktop && !!selected"
-        @update:open="(value) => { if (!value) close(); }"
+        @update:open="(value) => { if (!value && !isDesktop) close(); }"
       >
         <template #content>
           <div class="max-h-[85vh] overflow-y-auto p-4">
