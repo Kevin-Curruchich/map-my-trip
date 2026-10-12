@@ -27,3 +27,8 @@ logs
 
 # Eval reports (pnpm evals)
 .evals/
+
+# Agent skills (local only, see README)
+.agents/
+.claude/skills/
+skills-lock.json

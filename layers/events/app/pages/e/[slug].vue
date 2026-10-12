@@ -163,6 +163,24 @@ const winner = computed(() =>
   event.value?.proposals.find((p) => p.id === event.value?.winningProposalId)
 );
 
+const proposalPlaces = computed(() =>
+  (event.value?.proposals ?? [])
+    .flatMap((proposal) => proposal.steps)
+    .flatMap((step) => (typeof step !== "string" && step.place ? [step.place] : []))
+);
+const { selected, open, close } = useSelectedPlace(() =>
+  proposalPlaces.value.map((place) => ({ source: place.source, id: place.id }))
+);
+const isDesktop = useIsDesktop();
+
+// The step's place as stored, shown while the panel loads or if it fails.
+const selectedFallback = computed(() => {
+  const place = proposalPlaces.value.find(
+    (item) => item.source === selected.value?.source && item.id === selected.value?.id
+  );
+  return place ? { name: place.name, address: place.address } : undefined;
+});
+
 function voteLabel(votes: number) {
   return votes === 1 ? "1 voto" : `${votes} votos`;
 }
@@ -214,250 +232,305 @@ async function copyLink() {
 </script>
 
 <template>
-  <UContainer v-if="event" class="max-w-xl py-10 space-y-8">
-    <section>
-      <h1 class="text-2xl font-bold">{{ event.title }}</h1>
-      <div class="text-muted flex flex-col gap-1 mt-1">
-        <ULink
-          :to="eventMapUrl(event)"
-          target="_blank"
-          class="inline-flex items-center gap-1"
-        >
-          <UIcon name="i-lucide-map-pin" />
-          {{ event.city }}
-        </ULink>
-        <span v-if="event.date" class="inline-flex items-center gap-1">
-          <UIcon name="i-lucide-calendar" />
-          {{ formatEventDate(event.date) }}
-        </span>
-      </div>
-      <p v-if="event.description" class="mt-2">{{ event.description }}</p>
-
-      <div class="flex flex-wrap gap-2 mt-4">
-        <UButton
-          :to="whatsappUrl"
-          target="_blank"
-          icon="i-simple-icons-whatsapp"
-          color="success"
-          @click="shareOnWhatsApp"
-        >
-          Compartir en WhatsApp
-        </UButton>
-        <UButton
-          icon="i-lucide-link"
-          variant="outline"
-          color="neutral"
-          @click="copyLink"
-        >
-          Copiar link
-        </UButton>
-      </div>
-      <p v-if="!loggedIn" class="mt-3 text-sm text-muted">
-        ¿Creaste este plan?
-        <ULink
-          :to="{ path: '/login', query: { redirect: `/e/${slug}` } }"
-          class="font-medium text-mango-800 underline dark:text-mango-400"
-        >
-          Inicia sesión para administrarlo
-        </ULink>
-      </p>
-    </section>
-
-    <UCard
-      v-if="winner"
-      class="ring-2 ring-primary"
+  <UContainer v-if="event" class="max-w-6xl py-10">
+    <div
+      class="grid gap-8 lg:items-start"
+      :class="proposalPlaces.length ? 'lg:grid-cols-[2fr_3fr]' : 'mx-auto max-w-xl'"
     >
-      <template #header>
-        <p class="text-sm font-medium text-mango-800 dark:text-mango-400">Plan final</p>
-        <h2 class="text-xl font-bold">{{ winner.title }}</h2>
-      </template>
-      <p>{{ winner.description }}</p>
-      <ProposalSteps :steps="winner.steps" class="mt-4" />
-      <template #footer>
-        <p class="text-sm text-muted">
-          {{ voteLabel(winner.votes) }} de {{ totalVotes }} ·
-          {{ budgetLabel(winner.budget) }}
-        </p>
-      </template>
-    </UCard>
+      <div class="min-w-0 space-y-8">
+        <section>
+          <h1 class="text-2xl font-bold">{{ event.title }}</h1>
+          <div class="text-muted flex flex-col gap-1 mt-1">
+            <ULink
+              :to="eventMapUrl(event)"
+              target="_blank"
+              class="inline-flex items-center gap-1"
+            >
+              <UIcon name="i-lucide-map-pin" />
+              {{ event.city }}
+            </ULink>
+            <span v-if="event.date" class="inline-flex items-center gap-1">
+              <UIcon name="i-lucide-calendar" />
+              {{ formatEventDate(event.date) }}
+            </span>
+          </div>
+          <p v-if="event.description" class="mt-2">{{ event.description }}</p>
 
-    <section v-if="event.status === 'voting'" class="space-y-3">
-      <div>
-        <h2 class="font-semibold">Voten por un plan</h2>
-        <p class="text-sm text-muted">
-          {{
-            participantId
-              ? "Toca el que prefieras; puedes cambiar tu voto."
-              : "Únete abajo para poder votar."
-          }}
-        </p>
-      </div>
+          <div class="flex flex-wrap gap-2 mt-4">
+            <UButton
+              :to="whatsappUrl"
+              target="_blank"
+              icon="i-simple-icons-whatsapp"
+              color="success"
+              @click="shareOnWhatsApp"
+            >
+              Compartir en WhatsApp
+            </UButton>
+            <UButton
+              icon="i-lucide-link"
+              variant="outline"
+              color="neutral"
+              @click="copyLink"
+            >
+              Copiar link
+            </UButton>
+          </div>
+          <p v-if="!loggedIn" class="mt-3 text-sm text-muted">
+            ¿Creaste este plan?
+            <ULink
+              :to="{ path: '/login', query: { redirect: `/e/${slug}` } }"
+              class="font-medium text-mango-800 underline dark:text-mango-400"
+            >
+              Inicia sesión para administrarlo
+            </ULink>
+          </p>
+        </section>
 
-      <UCard
-        v-for="proposal in event.proposals"
-        :key="proposal.id"
-        :class="{ 'ring-2 ring-primary': proposal.id === event.myVoteProposalId }"
-      >
-        <div class="flex items-start justify-between gap-3">
-          <h3 class="font-semibold">{{ proposal.title }}</h3>
-          <UBadge variant="subtle" size="sm" class="shrink-0">
-            {{ budgetLabel(proposal.budget) }}
-          </UBadge>
-        </div>
-        <p class="mt-1 text-sm">{{ proposal.description }}</p>
-        <ProposalSteps :steps="proposal.steps" class="mt-3" />
-
-        <div class="mt-4 flex items-center justify-between gap-3">
-          <span class="text-sm text-muted">{{ voteLabel(proposal.votes) }}</span>
-          <UButton
-            v-if="participantId"
-            size="sm"
-            :variant="proposal.id === event.myVoteProposalId ? 'solid' : 'outline'"
-            :icon="proposal.id === event.myVoteProposalId ? 'i-lucide-check' : 'i-lucide-thumbs-up'"
-            :loading="votingFor === proposal.id"
-            @click="vote(proposal.id)"
-          >
-            {{ proposal.id === event.myVoteProposalId ? "Tu voto" : "Votar" }}
-          </UButton>
-        </div>
-      </UCard>
-    </section>
-
-    <UCard v-if="event.isOwner && event.status !== 'closed'">
-      <template #header>
-        <h2 class="font-semibold">Eres quien creó este plan</h2>
-      </template>
-      <p v-if="event.status === 'open'" class="text-sm text-muted">
-        Cuando se haya unido el grupo, la IA propone 3 planes con lo que dijo
-        cada quien y todos votan.
-      </p>
-      <p v-else class="text-sm text-muted">
-        Llevan {{ voteLabel(totalVotes) }} de {{ event.participants.length }}
-        personas. Al cerrar, gana el plan con más votos.
-      </p>
-
-      <div class="mt-4 flex flex-wrap gap-2">
-        <UButton
-          v-if="event.status === 'voting'"
-          icon="i-lucide-flag"
-          :loading="isClosing"
-          :disabled="isGenerating"
-          @click="closeVoting"
+        <UCard
+          v-if="winner"
+          class="ring-2 ring-primary"
         >
-          Cerrar votación
-        </UButton>
-        <UButton
-          icon="i-lucide-sparkles"
-          :variant="event.status === 'voting' ? 'outline' : 'solid'"
-          :loading="isGenerating"
-          :disabled="event.participants.length === 0 || isClosing"
-          @click="generateProposals"
-        >
-          {{
-            event.status === "voting"
-              ? "Proponer otros planes"
-              : "Proponer planes con IA"
-          }}
-        </UButton>
-      </div>
-      <p
-        v-if="event.status === 'voting'"
-        class="mt-2 text-xs text-dimmed"
-      >
-        Proponer otros planes borra los votos actuales.
-      </p>
-      <p
-        v-else-if="event.participants.length === 0"
-        class="mt-2 text-xs text-dimmed"
-      >
-        Necesitas al menos una persona unida.
-      </p>
-    </UCard>
-
-    <UCard v-if="!participantId && event.status !== 'closed'">
-      <template #header>
-        <h2 class="font-semibold">Únete al plan</h2>
-      </template>
-
-      <UForm
-        :schema="schema"
-        :state="state"
-        class="space-y-4"
-        @submit="onSubmit"
-      >
-        <UFormField label="Tu nombre" name="name" required>
-          <UInput v-model="state.name" placeholder="Ana" class="w-full" />
-        </UFormField>
-
-        <UFormField label="¿Cuánto puedes gastar?" name="budget" required>
-          <URadioGroup
-            v-model="state.budget"
-            orientation="horizontal"
-            :items="
-              eventBudgetOptions.map((option) => ({
-                label: option.label,
-                value: option.value,
-              }))
-            "
+          <template #header>
+            <p class="text-sm font-medium text-mango-800 dark:text-mango-400">Plan final</p>
+            <h2 class="text-xl font-bold">{{ winner.title }}</h2>
+          </template>
+          <p>{{ winner.description }}</p>
+          <ProposalSteps
+            :steps="winner.steps"
+            :selected="selected"
+            class="mt-4"
+            @select="open"
           />
-        </UFormField>
-
-        <UFormField label="¿Qué te gustaría hacer?" name="preferences">
-          <UTextarea
-            v-model="state.preferences"
-            placeholder="Algo tranquilo, comida mexicana, nada muy lejos"
-            :rows="3"
-            class="w-full"
-          />
-        </UFormField>
-
-        <UButton type="submit" block :loading="isJoining">Unirme</UButton>
-      </UForm>
-    </UCard>
-
-    <UAlert
-      v-else-if="participantId && event.status === 'open'"
-      icon="i-lucide-check"
-      color="success"
-      variant="subtle"
-      title="Ya estás dentro"
-      description="Cuando el grupo esté completo, quien creó el plan pedirá 3 propuestas y aquí mismo votan."
-    />
-
-    <section>
-      <h2 class="font-semibold mb-3">
-        Se han unido {{ event.participants.length }}
-      </h2>
-      <p v-if="event.participants.length === 0" class="text-muted">
-        Todavía nadie. Comparte el link en tu grupo.
-      </p>
-      <ul v-else class="space-y-2">
-        <li
-          v-for="(participant, index) in event.participants"
-          :key="index"
-          class="flex items-start gap-3"
-        >
-          <UAvatar :alt="participant.name" size="sm" />
-          <div>
-            <p class="font-medium">
-              {{ participant.name }}
-              <UBadge variant="subtle" size="sm" class="ml-1">
-                {{ budgetLabel(participant.budget) }}
-              </UBadge>
+          <template #footer>
+            <p class="text-sm text-muted">
+              {{ voteLabel(winner.votes) }} de {{ totalVotes }} ·
+              {{ budgetLabel(winner.budget) }}
             </p>
-            <p v-if="participant.preferences" class="text-sm text-muted">
-              {{ participant.preferences }}
+          </template>
+        </UCard>
+
+        <section v-if="event.status === 'voting'" class="space-y-3">
+          <div>
+            <h2 class="font-semibold">Voten por un plan</h2>
+            <p class="text-sm text-muted">
+              {{
+                participantId
+                  ? "Toca el que prefieras; puedes cambiar tu voto."
+                  : "Únete abajo para poder votar."
+              }}
             </p>
           </div>
-        </li>
-      </ul>
-    </section>
 
-    <LoginPrompt
-      v-model:open="loginPromptOpen"
-      title="Tu sesión expiró"
-      description="Vuelve a entrar con la cuenta con la que creaste el plan para seguir administrándolo."
-      :redirect="`/e/${slug}`"
-    />
+          <UCard
+            v-for="proposal in event.proposals"
+            :key="proposal.id"
+            :class="{ 'ring-2 ring-primary': proposal.id === event.myVoteProposalId }"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <h3 class="font-semibold">{{ proposal.title }}</h3>
+              <UBadge variant="subtle" size="sm" class="shrink-0">
+                {{ budgetLabel(proposal.budget) }}
+              </UBadge>
+            </div>
+            <p class="mt-1 text-sm">{{ proposal.description }}</p>
+            <ProposalSteps
+              :steps="proposal.steps"
+              :selected="selected"
+              class="mt-3"
+              @select="open"
+            />
+
+            <div class="mt-4 flex items-center justify-between gap-3">
+              <span class="text-sm text-muted">{{ voteLabel(proposal.votes) }}</span>
+              <UButton
+                v-if="participantId"
+                size="sm"
+                :variant="proposal.id === event.myVoteProposalId ? 'solid' : 'outline'"
+                :icon="proposal.id === event.myVoteProposalId ? 'i-lucide-check' : 'i-lucide-thumbs-up'"
+                :loading="votingFor === proposal.id"
+                @click="vote(proposal.id)"
+              >
+                {{ proposal.id === event.myVoteProposalId ? "Tu voto" : "Votar" }}
+              </UButton>
+            </div>
+          </UCard>
+        </section>
+
+        <UCard v-if="event.isOwner && event.status !== 'closed'">
+          <template #header>
+            <h2 class="font-semibold">Eres quien creó este plan</h2>
+          </template>
+          <p v-if="event.status === 'open'" class="text-sm text-muted">
+            Cuando se haya unido el grupo, la IA propone 3 planes con lo que dijo
+            cada quien y todos votan.
+          </p>
+          <p v-else class="text-sm text-muted">
+            Llevan {{ voteLabel(totalVotes) }} de {{ event.participants.length }}
+            personas. Al cerrar, gana el plan con más votos.
+          </p>
+
+          <div class="mt-4 flex flex-wrap gap-2">
+            <UButton
+              v-if="event.status === 'voting'"
+              icon="i-lucide-flag"
+              :loading="isClosing"
+              :disabled="isGenerating"
+              @click="closeVoting"
+            >
+              Cerrar votación
+            </UButton>
+            <UButton
+              icon="i-lucide-sparkles"
+              :variant="event.status === 'voting' ? 'outline' : 'solid'"
+              :loading="isGenerating"
+              :disabled="event.participants.length === 0 || isClosing"
+              @click="generateProposals"
+            >
+              {{
+                event.status === "voting"
+                  ? "Proponer otros planes"
+                  : "Proponer planes con IA"
+              }}
+            </UButton>
+          </div>
+          <p
+            v-if="event.status === 'voting'"
+            class="mt-2 text-xs text-dimmed"
+          >
+            Proponer otros planes borra los votos actuales.
+          </p>
+          <p
+            v-else-if="event.participants.length === 0"
+            class="mt-2 text-xs text-dimmed"
+          >
+            Necesitas al menos una persona unida.
+          </p>
+        </UCard>
+
+        <UCard v-if="!participantId && event.status !== 'closed'">
+          <template #header>
+            <h2 class="font-semibold">Únete al plan</h2>
+          </template>
+
+          <UForm
+            :schema="schema"
+            :state="state"
+            class="space-y-4"
+            @submit="onSubmit"
+          >
+            <UFormField label="Tu nombre" name="name" required>
+              <UInput v-model="state.name" placeholder="Ana" class="w-full" />
+            </UFormField>
+
+            <UFormField label="¿Cuánto puedes gastar?" name="budget" required>
+              <URadioGroup
+                v-model="state.budget"
+                orientation="horizontal"
+                :items="
+                  eventBudgetOptions.map((option) => ({
+                    label: option.label,
+                    value: option.value,
+                  }))
+                "
+              />
+            </UFormField>
+
+            <UFormField label="¿Qué te gustaría hacer?" name="preferences">
+              <UTextarea
+                v-model="state.preferences"
+                placeholder="Algo tranquilo, comida mexicana, nada muy lejos"
+                :rows="3"
+                class="w-full"
+              />
+            </UFormField>
+
+            <UButton type="submit" block :loading="isJoining">Unirme</UButton>
+          </UForm>
+        </UCard>
+
+        <UAlert
+          v-else-if="participantId && event.status === 'open'"
+          icon="i-lucide-check"
+          color="success"
+          variant="subtle"
+          title="Ya estás dentro"
+          description="Cuando el grupo esté completo, quien creó el plan pedirá 3 propuestas y aquí mismo votan."
+        />
+
+        <section>
+          <h2 class="font-semibold mb-3">
+            Se han unido {{ event.participants.length }}
+          </h2>
+          <p v-if="event.participants.length === 0" class="text-muted">
+            Todavía nadie. Comparte el link en tu grupo.
+          </p>
+          <ul v-else class="space-y-2">
+            <li
+              v-for="(participant, index) in event.participants"
+              :key="index"
+              class="flex items-start gap-3"
+            >
+              <UAvatar :alt="participant.name" size="sm" />
+              <div>
+                <p class="font-medium">
+                  {{ participant.name }}
+                  <UBadge variant="subtle" size="sm" class="ml-1">
+                    {{ budgetLabel(participant.budget) }}
+                  </UBadge>
+                </p>
+                <p v-if="participant.preferences" class="text-sm text-muted">
+                  {{ participant.preferences }}
+                </p>
+              </div>
+            </li>
+          </ul>
+        </section>
+
+        <LoginPrompt
+          v-model:open="loginPromptOpen"
+          title="Tu sesión expiró"
+          description="Vuelve a entrar con la cuenta con la que creaste el plan para seguir administrándolo."
+          :redirect="`/e/${slug}`"
+        />
+      </div>
+
+      <!-- Below the sticky app header (61px). -->
+      <aside
+        v-if="proposalPlaces.length"
+        class="hidden lg:sticky lg:top-20 lg:block lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto"
+      >
+        <UCard v-if="isDesktop && selected">
+          <PlacePanel
+            :key="`${selected.source}-${selected.id}`"
+            :place="selected"
+            :fallback="selectedFallback"
+            @close="close"
+          />
+        </UCard>
+        <UEmpty
+          v-else
+          icon="i-lucide-map-pin"
+          title="Toca un lugar para ver fotos y detalles"
+        />
+      </aside>
+    </div>
+
+    <!-- It also reports closing when the screen turns desktop; the place stays open there. -->
+    <UDrawer
+      :open="!isDesktop && !!selected"
+      @update:open="(value) => { if (!value && !isDesktop) close(); }"
+    >
+      <template #content>
+        <div class="max-h-[85vh] overflow-y-auto p-4">
+          <PlacePanel
+            v-if="selected"
+            :key="`${selected.source}-${selected.id}`"
+            :place="selected"
+            :fallback="selectedFallback"
+            @close="close"
+          />
+        </div>
+      </template>
+    </UDrawer>
   </UContainer>
 </template>

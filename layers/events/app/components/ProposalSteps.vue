@@ -3,16 +3,12 @@ import { eventBudgetOptions } from "~~/layers/events/shared/constants/event-opti
 
 defineProps<{
   steps: StoredProposalStep[];
+  selected?: PlaceRef | null;
 }>();
+defineEmits<{ select: [place: PlaceRef] }>();
 
 function priceLabel(level: StepPlace["priceLevel"]) {
   return eventBudgetOptions.find((option) => option.value === level)?.label;
-}
-
-function instagramUrl(handle: string) {
-  return handle.startsWith("http")
-    ? handle
-    : `https://instagram.com/${handle.replace(/^@/, "")}`;
 }
 </script>
 
@@ -35,16 +31,18 @@ function instagramUrl(handle: string) {
       <div v-else class="min-w-0 flex-1 space-y-1">
         <p class="text-sm font-medium">{{ step.title }}</p>
 
-        <div v-if="step.place" class="rounded-lg border border-default p-3 text-sm">
-          <div class="flex flex-wrap items-center gap-2">
-            <ULink
-              :to="step.place.mapsUrl"
-              target="_blank"
-              class="inline-flex items-center gap-1 font-semibold text-highlighted"
-            >
-              <UIcon name="i-lucide-map-pin" class="shrink-0 text-primary" />
-              {{ step.place.name }}
-            </ULink>
+        <PlaceCard
+          v-if="step.place"
+          :name="step.place.name"
+          :selected="selected?.source === step.place.source && selected?.id === step.place.id"
+          :description="step.place.description"
+          :rating="step.place.rating"
+          :rating-count="step.place.ratingCount"
+          :price-label="priceLabel(step.place.priceLevel)"
+          :address="step.place.address"
+          @select="$emit('select', { source: step.place.source, id: step.place.id })"
+        >
+          <template #badges>
             <UBadge
               v-if="step.place.partner"
               color="primary"
@@ -63,24 +61,8 @@ function instagramUrl(handle: string) {
             >
               Recomendado
             </UBadge>
-          </div>
-
-          <p v-if="step.place.description" class="mt-1">
-            {{ step.place.description }}
-          </p>
-
-          <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-muted">
-            <span v-if="step.place.rating" class="inline-flex items-center gap-1">
-              <UIcon name="i-lucide-star" class="text-warning" />
-              {{ step.place.rating.toFixed(1) }}
-              <span v-if="step.place.ratingCount">({{ step.place.ratingCount }})</span>
-            </span>
-            <span v-if="priceLabel(step.place.priceLevel)">
-              {{ priceLabel(step.place.priceLevel) }}
-            </span>
-            <span v-if="step.place.address" class="truncate">
-              {{ step.place.address }}
-            </span>
+          </template>
+          <template #meta>
             <ULink
               v-if="step.place.instagram"
               :to="instagramUrl(step.place.instagram)"
@@ -90,8 +72,8 @@ function instagramUrl(handle: string) {
               <UIcon name="i-simple-icons-instagram" />
               Instagram
             </ULink>
-          </div>
-        </div>
+          </template>
+        </PlaceCard>
       </div>
     </li>
   </ol>

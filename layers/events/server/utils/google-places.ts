@@ -227,6 +227,103 @@ export async function getPlaceDetails(
   };
 }
 
+interface GoogleAuthor {
+  displayName?: string;
+  uri?: string;
+  photoUri?: string;
+}
+
+export type GooglePlaceProfile = Pick<
+  PlaceInfo,
+  | "name"
+  | "address"
+  | "mapsUrl"
+  | "rating"
+  | "ratingCount"
+  | "phone"
+  | "website"
+  | "openNow"
+  | "weekdayHours"
+  | "photos"
+  | "reviews"
+>;
+
+// Everything the place panel shows, in one Place Details call. Reviews make
+// it an Enterprise + Atmosphere request; nothing here may be cached.
+export async function getPlaceProfile(placeId: string): Promise<GooglePlaceProfile> {
+  const place = await placesFetch<{
+    id: string;
+    displayName?: { text: string };
+    formattedAddress?: string;
+    googleMapsUri?: string;
+    rating?: number;
+    userRatingCount?: number;
+    nationalPhoneNumber?: string;
+    websiteUri?: string;
+    currentOpeningHours?: { openNow?: boolean };
+    regularOpeningHours?: { weekdayDescriptions?: string[] };
+    photos?: { name: string; authorAttributions?: GoogleAuthor[] }[];
+    reviews?: {
+      rating?: number;
+      text?: { text: string };
+      relativePublishTimeDescription?: string;
+      authorAttribution?: GoogleAuthor;
+    }[];
+  }>(
+    `/places/${encodeURIComponent(placeId)}`,
+    "id,displayName,formattedAddress,googleMapsUri,photos,rating,userRatingCount,nationalPhoneNumber,websiteUri,currentOpeningHours,regularOpeningHours,reviews",
+    { query: { languageCode: "es", regionCode: REGION } }
+  );
+
+  return {
+    name: place.displayName?.text ?? "",
+    address: place.formattedAddress ?? null,
+    mapsUrl:
+      place.googleMapsUri ??
+      `https://www.google.com/maps/place/?q=place_id:${place.id}`,
+    rating: place.rating ?? null,
+    ratingCount: place.userRatingCount ?? null,
+    phone: place.nationalPhoneNumber ?? null,
+    website: place.websiteUri ?? null,
+    openNow: place.currentOpeningHours?.openNow ?? null,
+    weekdayHours: place.regularOpeningHours?.weekdayDescriptions ?? [],
+    photos: (place.photos ?? []).map((photo) => ({
+      name: photo.name,
+      authors: (photo.authorAttributions ?? []).map((author) => ({
+        name: author.displayName ?? "",
+        uri: author.uri ?? null,
+      })),
+    })),
+    reviews: (place.reviews ?? []).flatMap((review) =>
+      review.text?.text
+        ? [
+            {
+              author: review.authorAttribution?.displayName ?? "",
+              authorUri: review.authorAttribution?.uri ?? null,
+              authorPhoto: review.authorAttribution?.photoUri ?? null,
+              rating: review.rating ?? 0,
+              text: review.text.text,
+              when: review.relativePublishTimeDescription ?? "",
+            },
+          ]
+        : []
+    ),
+  };
+}
+
+// The image URL of a photo, so the browser loads it without our key.
+// https://developers.google.com/maps/documentation/places/web-service/place-photos
+export async function getPhotoUri(name: string, width: number) {
+  const { photoUri } = await $fetch<{ photoUri: string }>(
+    `${PLACES_API}/${name}/media`,
+    {
+      query: { maxWidthPx: width, skipHttpRedirect: "true" },
+      headers: { "X-Goog-Api-Key": useRuntimeConfig().googlePlacesApiKey },
+    }
+  );
+  return photoUri;
+}
+
 const PRICE_LEVELS: Record<string, StepPlace["priceLevel"]> = {
   PRICE_LEVEL_FREE: "low",
   PRICE_LEVEL_INEXPENSIVE: "low",

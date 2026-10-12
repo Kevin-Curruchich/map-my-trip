@@ -3,10 +3,33 @@ import { importLibrary } from "@googlemaps/js-api-loader";
 
 const props = defineProps<{
   activities: ActivityWithPlace[];
+  selectedId?: string | null;
 }>();
+const emit = defineEmits<{ select: [placeId: string] }>();
 
 const mapContainer = useTemplateRef("mapContainer");
 const config = useRuntimeConfig();
+
+const PIN_COLOR = "#FF5722";
+const SELECTED_PIN_COLOR = "#B23A10";
+
+let map: google.maps.Map | undefined;
+const pins: {
+  placeId?: string;
+  pin: google.maps.marker.PinElement;
+  position: google.maps.LatLngLiteral;
+}[] = [];
+
+function highlightSelected() {
+  for (const { placeId, pin, position } of pins) {
+    const isSelected = !!placeId && placeId === props.selectedId;
+    pin.scale = isSelected ? 2 : 1.5;
+    pin.background = isSelected ? SELECTED_PIN_COLOR : PIN_COLOR;
+    if (isSelected) map?.panTo(position);
+  }
+}
+
+watch(() => props.selectedId, highlightSelected);
 
 onMounted(async () => {
   if (!mapContainer.value) return;
@@ -18,7 +41,7 @@ onMounted(async () => {
       importLibrary("marker"),
     ]);
 
-  const map = new Map(mapContainer.value, {
+  map = new Map(mapContainer.value, {
     zoom: 15,
     mapId: config.public.googleMapsMapId,
     mapTypeControl: false,
@@ -32,24 +55,30 @@ onMounted(async () => {
     const position = { lat: activity.latitude, lng: activity.longitude };
     const pin = new PinElement({
       scale: 1.5,
-      background: "#FF5722",
+      background: PIN_COLOR,
       borderColor: "#FFFFFF",
       glyphColor: "#FFFFFF",
       glyphText: `${index + 1}`,
     });
 
-    new AdvancedMarkerElement({
+    const marker = new AdvancedMarkerElement({
       map,
       position,
       title: activity.name,
       content: pin.element,
+      gmpClickable: true,
     });
+    const placeId = activity.placeId;
+    if (placeId) marker.addEventListener("gmp-click", () => emit("select", placeId));
+
+    pins.push({ placeId, pin, position });
     bounds.extend(position);
   });
 
   if (props.activities.length > 0) {
     map.fitBounds(bounds);
   }
+  highlightSelected();
 });
 </script>
 
