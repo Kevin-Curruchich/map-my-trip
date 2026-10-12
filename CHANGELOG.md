@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.5.0](https://github.com/Kevin-Curruchich/map-my-trip/compare/v0.4.0...v0.5.0) (2026-10-12)
+
+
+### Features
+
+* open event proposal places in the place panel ([286c712](https://github.com/Kevin-Curruchich/map-my-trip/commit/286c712a6f351593e6f7651280ad989bbc831a21))
+* open trip places in a side panel or bottom sheet ([d53c92f](https://github.com/Kevin-Curruchich/map-my-trip/commit/d53c92f27ae5653428ac624d01b5b3b699d7f1d2))
+* place details and photos endpoints for the place panel ([24f2942](https://github.com/Kevin-Curruchich/map-my-trip/commit/24f29422059983f25f97fcd0bf3e98c3810426d7))
+* place panel for trips and events ([3acfcb4](https://github.com/Kevin-Curruchich/map-my-trip/commit/3acfcb4d7bdb1c6177d5aed65e502e7c909ef366))
+* shared place panel with photos, hours, reviews and contact ([2ff73c8](https://github.com/Kevin-Curruchich/map-my-trip/commit/2ff73c89d640813c632adf8d307158998c562133))
+* show trip and event places as the same clickable card ([1666e02](https://github.com/Kevin-Curruchich/map-my-trip/commit/1666e02240b462cc63402ce7ccc5129a1247ba61))
+
+
+### Bug Fixes
+
+* closing a place steps back in history and place links only use http(s) ([4b400af](https://github.com/Kevin-Curruchich/map-my-trip/commit/4b400afef7e57ad4e2daacbed83e8e965efedbfe))
+* keep shared place links open on desktop and load review avatars ([9e27b41](https://github.com/Kevin-Curruchich/map-my-trip/commit/9e27b41589ca6278542b5a495b4f1324715cca78))
+* keep the sticky place panel below the app header ([b4d41bf](https://github.com/Kevin-Curruchich/map-my-trip/commit/b4d41bf11bcafe1ecc9e753734941abd0f69ea6a))
+* show the photo carousel arrows inside the panel on every screen size ([8da28d0](https://github.com/Kevin-Curruchich/map-my-trip/commit/8da28d0d71abbfbe89fd937f8eca4a33d534dfb6))
+
 ## [0.4.0](https://github.com/Kevin-Curruchich/map-my-trip/compare/v0.3.1...v0.4.0) (2026-10-09)
 
 
