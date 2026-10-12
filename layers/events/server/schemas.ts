@@ -96,7 +96,8 @@ export const RecommendedPlaceBodySchema = z.object({
   googlePlaceId: optionalText(300),
   instagram: optionalText(120),
   whatsapp: optionalText(30),
-  website: z.url().max(300).nullable().optional().or(z.literal("").transform(() => null)),
+  // Rendered as a link for every visitor: no javascript: or other schemes.
+  website: z.url({ protocol: /^https?$/ }).max(300).nullable().optional().or(z.literal("").transform(() => null)),
   partnerStatus: z.enum(partnerStatusValues).default("prospect"),
   active: z.boolean().default(true),
   notes: optionalText(2000),

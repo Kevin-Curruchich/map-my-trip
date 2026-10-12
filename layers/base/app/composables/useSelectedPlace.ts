@@ -21,8 +21,19 @@ export default function useSelectedPlace(allowed: MaybeRefOrGetter<PlaceRef[]>) 
     return selected.value ? router.replace({ query }) : router.push({ query });
   }
 
+  // The drawer and the Esc shortcut can both close at once; stepping back
+  // twice would leave the page.
+  let closing = false;
+  watch(() => route.query.place, () => (closing = false));
+
   function close() {
+    if (closing || !selected.value) return;
+    closing = true;
     const { place: _place, ...query } = route.query;
+    const target = router.resolve({ query }).fullPath;
+    // Opened from this page: step back instead of leaving a duplicate entry
+    // that would make the next Back do nothing. A shared link has none.
+    if (window.history.state?.back === target) return router.back();
     return router.replace({ query });
   }
 

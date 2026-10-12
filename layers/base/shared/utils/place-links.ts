@@ -1,5 +1,5 @@
 export function instagramUrl(handle: string) {
-  return handle.startsWith("http")
+  return /^https?:\/\//.test(handle)
     ? handle
     : `https://instagram.com/${handle.replace(/^@/, "")}`;
 }
