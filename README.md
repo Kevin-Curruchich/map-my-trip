@@ -82,6 +82,13 @@ Plans and itineraries are graded against fixed scenarios, so a prompt or model c
 
 With `LANGSMITH_TRACING=true` and a key, every generation is one trace in [LangSmith](https://smith.langchain.com): the drafts, the place searches, the picks, the corrections and the judge.
 
+## Agent skills
+
+The design skills used with Claude Code are installed locally with [skills](https://github.com/vercel-labs/skills) and kept out of git (`.agents/`, `.claude/skills/`, `skills-lock.json`):
+
+- `ui-ux-pro-max`, `design`, `design-system`, `ui-styling`, `brand`, `banner-design`, `slides`: `npx skills add nextlevelbuilder/ui-ux-pro-max-skill`
+- `apple-design`: `npx skills add dickwu/apple-design-skill`
+
 ## Releases
 
 Versions are managed by [release-please](https://github.com/googleapis/release-please) from [Conventional Commits](https://www.conventionalcommits.org) (`feat:`, `fix:`, `refactor:`…).
