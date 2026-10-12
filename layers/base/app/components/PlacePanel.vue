@@ -77,7 +77,7 @@ function photoUrl(photoName: string) {
         v-slot="{ item }"
         :items="photos"
         arrows
-        :ui="{ prev: 'start-2', next: 'end-2' }"
+        :ui="{ prev: 'start-2 sm:start-2', next: 'end-2 sm:end-2' }"
         class="w-full"
       >
         <figure>
